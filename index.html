@@ -1,0 +1,3121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可信开源代码仓管理工具 - 原型</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ============================================================
+   DESIGN TOKENS — Precision Industrial
+   ============================================================ */
+:root{
+  /* Primary — Deep Sea Blue */
+  --primary:#1565C0;
+  --primary-50:#E3F2FD;
+  --primary-100:#BBDEFB;
+  --primary-200:#90CAF9;
+  --primary-500:#1976D2;
+  --primary-700:#1565C0;
+  --primary-900:#0D47A1;
+
+  /* Semantic */
+  --success:#2E7D32;
+  --success-50:#E8F5E9;
+  --success-100:#C8E6C9;
+  --warning:#E65100;
+  --warning-50:#FFF3E0;
+  --warning-100:#FFE0B2;
+  --error:#C62828;
+  --error-50:#FFEBEE;
+  --error-100:#FFCDD2;
+  --info:#00695C;
+  --info-50:#E0F2F1;
+
+  /* Neutral — Cool Gray */
+  --bg:#F0F2F5;
+  --bg-elevated:#FFFFFF;
+  --bg-surface:#FAFBFC;
+  --bg-overlay:rgba(0,0,0,0.45);
+  --border:#E0E3E7;
+  --border-subtle:#EBEEF2;
+  --border-strong:#D0D5DC;
+
+  --text-primary:#1A1D21;
+  --text-secondary:#4A5059;
+  --text-tertiary:#8A929D;
+  --text-disabled:#B8BEC7;
+  --text-inverse:#FFFFFF;
+
+  /* Light Sidebar */
+  --sidebar-bg:#FFFFFF;
+  --sidebar-bg-hover:#F0F7FF;
+  --sidebar-bg-active:#E3F2FD;
+  --sidebar-text:#4A5059;
+  --sidebar-text-active:#1565C0;
+  --sidebar-border:#EBEEF2;
+  --sidebar-accent:#1565C0;
+  /* ↑ 确认：侧边栏保持白色设计系统 */
+
+  /* Layout */
+  --sidebar-w:240px;
+  --header-h:60px;
+  --content-max:1440px;
+
+  /* Shadows */
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.10),0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl:0 16px 48px rgba(0,0,0,0.12),0 8px 16px rgba(0,0,0,0.04);
+
+  /* Radius */
+  --radius-sm:4px;
+  --radius:8px;
+  --radius-md:12px;
+  --radius-lg:16px;
+  --radius-full:9999px;
+
+  /* Typography */
+  --font-sans:'Inter','Noto Sans SC',-apple-system,BlinkMacSystemFont,sans-serif;
+  --font-mono:'SF Mono',Monaco,'Cascadia Code','Roboto Mono',Consolas,monospace;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text-primary);font-size:14px;line-height:1.6;}
+
+/* ============================================================
+   SIDEBAR — Clean Light
+   ============================================================ */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);z-index:100;display:flex;flex-direction:column;overflow-y:auto;border-right:1px solid var(--sidebar-border);}
+.sidebar-logo{padding:0 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--sidebar-border);min-height:var(--header-h);}
+.sidebar-logo .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--primary-500),var(--primary-700));border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex-shrink:0;box-shadow:0 2px 8px rgba(21,101,192,0.25);}
+.sidebar-logo .logo-text{font-size:14px;font-weight:700;color:var(--text-primary);line-height:1.35;letter-spacing:-0.2px;}
+.sidebar-logo .logo-text small{font-size:11px;font-weight:500;color:var(--text-tertiary);display:block;margin-top:1px;}
+.sidebar-nav{flex:1;padding:12px 0;}
+.nav-group{margin-bottom:8px;}
+.nav-group-title{padding:8px 20px 6px;font-size:11px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 18px;margin:0 10px;border-radius:var(--radius-sm);cursor:pointer;color:var(--sidebar-text);font-size:13px;font-weight:500;transition:all 0.15s ease;position:relative;border:none;background:none;width:calc(100% - 20px);text-align:left;}
+.nav-item:hover{background:var(--sidebar-bg-hover);color:var(--sidebar-text-active);}
+.nav-item.active{background:var(--sidebar-bg-active);color:var(--sidebar-text-active);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:-10px;top:8px;bottom:8px;width:3px;background:var(--sidebar-accent);border-radius:0 3px 3px 0;}
+.nav-item svg{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.btn svg,.icon svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;}
+.nav-sub{padding-left:48px;}
+.nav-sub .nav-item{padding:7px 16px 7px 0;font-size:12px;margin:0 10px 0 0;width:calc(100% - 10px);}
+.nav-sub .nav-item.active::before{display:none;}
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.main{margin-left:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column;}
+.header{height:var(--header-h);background:var(--bg-elevated);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);}
+.header-left{display:flex;align-items:center;gap:10px;}
+.breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-tertiary);font-weight:500;}
+.breadcrumb span{color:var(--text-primary);font-weight:600;}
+.breadcrumb::before{content:'›';margin-right:4px;color:var(--text-disabled);}
+.header-right{display:flex;align-items:center;gap:16px;}
+.avatar{width:34px;height:34px;border-radius:var(--radius-full);background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;box-shadow:var(--shadow-sm);}
+.content{flex:1;padding:24px 28px;max-width:var(--content-max);}
+
+/* ============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================ */
+.page-title{font-size:20px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;color:var(--text-primary);letter-spacing:-0.2px;}
+.page-title .subtitle{font-size:13px;font-weight:400;color:var(--text-tertiary);margin-left:auto;}
+.text-muted{color:var(--text-tertiary);}
+.text-secondary{color:var(--text-secondary);}
+.text-sm{font-size:12px;line-height:1.5;}
+.text-xs{font-size:11px;line-height:1.4;}
+.text-micro{font-size:10px;line-height:1.3;letter-spacing:0.3px;text-transform:uppercase;font-weight:600;}
+.font-mono{font-family:var(--font-mono);}
+.mb-16{margin-bottom:16px;}
+.mb-20{margin-bottom:20px;}
+.mb-24{margin-bottom:24px;}
+.mt-12{margin-top:12px;}
+.mt-16{margin-top:16px;}
+.gap-6{gap:6px;}
+.gap-8{gap:8px;}
+.gap-12{gap:12px;}
+.gap-16{gap:16px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;}
+.flex-center{display:flex;align-items:center;}
+.w-full{width:100%;}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.card{background:var(--bg-elevated);border-radius:var(--radius);border:none;padding:24px;margin-bottom:20px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.2s ease;}
+.card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.card--flat{box-shadow:none;border:1px solid var(--border-subtle);}
+.card--flat:hover{transform:none;box-shadow:var(--shadow);}
+.card-title{font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;color:var(--text-primary);letter-spacing:-0.1px;}
+.card-title .actions{display:flex;align-items:center;gap:8px;}
+.card-accent--primary{border-top:3px solid var(--primary-500);}
+.card-accent--success{border-top:3px solid var(--success);}
+.card-accent--warning{border-top:3px solid var(--warning);}
+.card-accent--error{border-top:3px solid var(--error);}
+
+/* ============================================================
+   BUTTON
+   ============================================================ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border-strong);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s ease;font-family:inherit;background:var(--bg-elevated);color:var(--text-primary);white-space:nowrap;position:relative;vertical-align:middle;}
+.btn:hover{border-color:var(--primary-500);color:var(--primary-700);background:var(--primary-50);}
+.btn:active{transform:scale(0.98);}
+.btn:focus-visible{outline:2px solid var(--primary-200);outline-offset:2px;}
+.btn-primary{background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;border-color:transparent;box-shadow:0 1px 3px rgba(21,101,192,0.25);}
+.btn-primary:hover{background:linear-gradient(135deg,var(--primary-700),var(--primary-900));color:#fff;border-color:transparent;box-shadow:0 2px 6px rgba(21,101,192,0.35);}
+.btn-primary:active{transform:scale(0.98);}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:var(--radius-sm);}
+.btn-lg{padding:11px 24px;font-size:14px;border-radius:var(--radius);}
+.btn-danger{color:var(--error);border-color:var(--error-100);background:var(--error-50);}
+.btn-danger:hover{background:var(--error);color:#fff;border-color:var(--error);}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--text-secondary);}
+.btn-ghost:hover{background:var(--bg-surface);color:var(--text-primary);}
+.btn-icon{padding:8px;border-radius:var(--radius-sm);}
+.btn-icon svg{width:16px;height:16px;}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+.input{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:400;outline:none;font-family:inherit;transition:border-color 0.15s ease,box-shadow 0.15s ease;width:100%;background:var(--bg-elevated);color:var(--text-primary);}
+.input:hover{border-color:var(--border-strong);}
+.input:focus{border-color:var(--primary-500);box-shadow:0 0 0 3px rgba(25,118,210,0.10);}
+.input::placeholder{color:var(--text-disabled);}
+select.input{appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A929D' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+textarea.input{min-height:80px;resize:vertical;line-height:1.6;}
+.search-box{display:flex;gap:8px;max-width:560px;}
+.search-box .input{flex:1;}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;table-layout:auto;}
+.table th{text-align:left;padding:12px 16px;background:var(--bg-surface);font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
+.table td{padding:14px 16px;border-bottom:1px solid var(--border-subtle);color:var(--text-primary);white-space:nowrap;font-weight:400;}
+.table tr{transition:background-color 0.12s ease;}
+.table tbody tr:hover td{background:var(--primary-50);}
+.table tbody tr:hover td:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
+.table tbody tr:hover td:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.table tbody tr:last-child td{border-bottom:none;}
+
+/* ============================================================
+   TAG / BADGE
+   ============================================================ */
+.tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:600;white-space:nowrap;line-height:1.4;}
+.tag::before{content:'';display:inline-block;width:6px;height:6px;border-radius:var(--radius-full);background:currentColor;opacity:0.7;}
+.tag-blue{background:var(--primary-50);color:var(--primary-700);}
+.tag-blue::before{background:var(--primary-500);}
+.tag-green{background:var(--success-50);color:var(--success);}
+.tag-green::before{background:var(--success);}
+.tag-orange{background:var(--warning-50);color:var(--warning);}
+.tag-orange::before{background:var(--warning);}
+.tag-red{background:var(--error-50);color:var(--error);}
+.tag-red::before{background:var(--error);}
+.tag-gray{background:var(--bg-surface);color:var(--text-tertiary);border:1px solid var(--border-subtle);}
+.tag-gray::before{background:var(--text-tertiary);}
+.tag-ghost{background:transparent;color:var(--text-tertiary);padding:2px 0;}
+.tag-ghost::before{display:none;}
+
+/* Risk badge */
+.risk-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;}
+.risk-badge--high{background:var(--error-50);color:var(--error);border:1px solid var(--error-100);}
+.risk-badge--medium{background:var(--warning-50);color:var(--warning);border:1px solid var(--warning-100);}
+.risk-badge--low{background:var(--primary-50);color:var(--primary-700);border:1px solid var(--primary-100);}
+.risk-badge--safe{background:var(--success-50);color:var(--success);border:1px solid var(--success-100);}
+
+/* Bell notification */
+.bell-btn{position:relative;width:36px;height:36px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);color:var(--text-secondary);transition:background 0.15s;}
+.bell-btn:hover{background:var(--bg);}
+.bell-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.bell-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;background:var(--error);color:#fff;border-radius:var(--radius-full);font-size:10px;font-weight:700;line-height:16px;text-align:center;padding:0 4px;}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:16px 0;font-size:13px;color:var(--text-secondary);font-weight:500;}
+.pagination-btns{display:flex;align-items:center;gap:6px;}
+.pagination-btns button{min-width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-elevated);cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:all 0.15s ease;padding:0 8px;}
+.pagination-btns button:hover{border-color:var(--primary-500);color:var(--primary-700);background:var(--primary-50);}
+.pagination-btns button.active{background:var(--primary-500);color:#fff;border-color:var(--primary-500);box-shadow:0 1px 3px rgba(21,101,192,0.25);}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs{display:flex;border-bottom:1px solid var(--border-subtle);margin-bottom:20px;gap:0;position:relative;}
+.tab{padding:12px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text-tertiary);border-bottom:2px solid transparent;transition:color 0.15s ease;position:relative;background:none;border:none;}
+.tab:hover{color:var(--text-secondary);}
+.tab.active{color:var(--primary-700);font-weight:600;}
+.tab.active::after{content:'';position:absolute;bottom:-2px;left:12px;right:12px;height:2px;background:var(--primary-500);border-radius:1px;}
+
+/* ============================================================
+   FORM
+   ============================================================ */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:12px;color:var(--text-secondary);font-weight:600;letter-spacing:0.2px;}
+.form-group .required::after{content:'*';color:var(--error);margin-left:3px;}
+.empty{text-align:center;padding:48px;color:var(--text-tertiary);font-size:14px;}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay{position:fixed;inset:0;background:var(--bg-overlay);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal{background:var(--bg-elevated);border-radius:var(--radius-md);width:560px;max-height:85vh;overflow:auto;box-shadow:var(--shadow-xl);border:1px solid var(--border-subtle);}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border-subtle);font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text-primary);letter-spacing:-0.1px;}
+.modal-body{padding:24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border-subtle);display:flex;justify-content:flex-end;gap:10px;}
+.close-btn{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-tertiary);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);transition:all 0.15s ease;}
+.close-btn:hover{background:var(--bg-surface);color:var(--text-primary);}
+
+/* ============================================================
+   DRAWER
+   ============================================================ */
+.drawer-overlay{position:fixed;inset:0;background:var(--bg-overlay);z-index:200;backdrop-filter:blur(4px);}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:640px;background:var(--bg-elevated);z-index:210;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;border-left:1px solid var(--border-subtle);}
+.drawer-header{padding:20px 24px;border-bottom:1px solid var(--border-subtle);font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--text-primary);letter-spacing:-0.1px;}
+.drawer-body{flex:1;overflow-y:auto;padding:24px;}
+.drawer-footer{padding:16px 24px;border-top:1px solid var(--border-subtle);display:flex;gap:10px;}
+
+/* ============================================================
+   ALERT / BANNER
+   ============================================================ */
+.alert{display:flex;align-items:flex-start;gap:12px;padding:14px 18px;border-radius:var(--radius);border:1px solid transparent;margin-bottom:20px;font-size:13px;line-height:1.6;}
+.alert__icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.alert__content{flex:1;}
+.alert__title{font-weight:700;margin-bottom:2px;font-size:13px;}
+.alert__desc{color:var(--text-secondary);font-size:12px;}
+.alert--error{background:var(--error-50);border-color:var(--error-100);color:var(--error);}
+.alert--warning{background:var(--warning-50);border-color:var(--warning-100);color:var(--warning);}
+.alert--success{background:var(--success-50);border-color:var(--success-100);color:var(--success);}
+.alert--info{background:var(--primary-50);border-color:var(--primary-100);color:var(--primary-700);}
+
+/* Risk Alert (version risk summary) */
+.risk-alert{display:flex;align-items:flex-start;gap:16px;padding:18px 20px;border-radius:var(--radius);border:1px solid var(--border);margin-bottom:20px;position:relative;overflow:hidden;}
+.risk-alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.risk-alert__icon{width:40px;height:40px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.risk-alert__icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.risk-alert__body{flex:1;min-width:0;}
+.risk-alert__head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.risk-alert__title{font-size:15px;font-weight:700;letter-spacing:-0.1px;}
+.risk-alert__advice{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+.risk-alert__metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.risk-metric{display:inline-flex;align-items:baseline;gap:6px;padding:5px 12px;border-radius:var(--radius-sm);background:var(--bg-elevated);border:1px solid var(--border-subtle);}
+.risk-metric .rm-val{font-size:14px;font-weight:700;line-height:1;}
+.risk-metric .rm-label{font-size:11px;color:var(--text-tertiary);font-weight:500;}
+.risk-alert--high{background:var(--error-50);}
+.risk-alert--high::before{background:var(--error);}
+.risk-alert--high .risk-alert__icon{background:var(--error-100);color:var(--error);}
+.risk-alert--high .risk-alert__title{color:var(--error);}
+.risk-alert--medium{background:var(--warning-50);}
+.risk-alert--medium::before{background:var(--warning);}
+.risk-alert--medium .risk-alert__icon{background:var(--warning-100);color:var(--warning);}
+.risk-alert--medium .risk-alert__title{color:var(--warning);}
+.risk-alert--low{background:var(--primary-50);}
+.risk-alert--low::before{background:var(--primary-500);}
+.risk-alert--low .risk-alert__icon{background:var(--primary-100);color:var(--primary-700);}
+.risk-alert--low .risk-alert__title{color:var(--primary-700);}
+
+/* ============================================================
+   STAT / SCORE
+   ============================================================ */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px;}
+.stat-card{background:var(--bg-elevated);border-radius:var(--radius);border:none;padding:20px 24px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.2s ease;}
+.stat-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.stat-card .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;}
+.stat-card .stat-value{font-size:28px;font-weight:700;color:var(--text-primary);line-height:1.2;letter-spacing:-0.5px;}
+.stat-card .stat-value small{font-size:12px;font-weight:500;color:var(--text-tertiary);margin-left:4px;}
+
+/* Circular Progress */
+.circular-progress{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.circular-progress svg{transform:rotate(-90deg);}
+.circular-progress__track{fill:none;stroke:var(--border-subtle);}
+.circular-progress__fill{fill:none;stroke-linecap:round;transition:stroke-dashoffset 0.6s ease;}
+.circular-progress__value{position:absolute;font-size:24px;font-weight:700;letter-spacing:-1px;}
+.circular-progress__label{position:absolute;bottom:4px;font-size:10px;color:var(--text-tertiary);font-weight:500;text-transform:uppercase;letter-spacing:0.3px;}
+
+/* Score bar */
+.score-bar{display:flex;align-items:center;gap:10px;}
+.score-bar-track{flex:1;height:6px;background:var(--border-subtle);border-radius:var(--radius-full);overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:var(--radius-full);background:linear-gradient(90deg,var(--primary-500),var(--primary-700));transition:width 0.4s ease;}
+.score-label{font-size:13px;font-weight:700;min-width:36px;text-align:right;color:var(--text-primary);}
+
+/* ============================================================
+   SEARCH PAGE
+   ============================================================ */
+.search-hero{text-align:center;padding:56px 28px 40px;background:linear-gradient(135deg,var(--primary-50) 0%,var(--bg-elevated) 100%);border-radius:var(--radius-md);margin-bottom:28px;border:1px solid var(--border-subtle);box-shadow:var(--shadow);}
+.search-hero h1{font-size:28px;font-weight:700;color:var(--text-primary);margin-bottom:10px;letter-spacing:-0.3px;}
+.search-hero p{color:var(--text-secondary);font-size:14px;margin-bottom:28px;}
+.search-hero .search-box{max-width:600px;margin:0 auto;}
+.search-hero .search-box .input{height:44px;font-size:14px;border-radius:var(--radius-sm) 0 0 var(--radius-sm);border-right:none;}
+.search-hero .search-box .btn-primary{height:44px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:0 24px;font-size:14px;}
+.sort-bar{display:flex;align-items:center;gap:20px;margin-bottom:20px;font-size:13px;color:var(--text-secondary);font-weight:500;}
+.sort-bar a{cursor:pointer;color:var(--text-secondary);text-decoration:none;padding:4px 0;border-bottom:2px solid transparent;transition:all 0.15s ease;font-weight:500;}
+.sort-bar a:hover{color:var(--text-primary);}
+.sort-bar a.active{color:var(--primary-700);border-bottom-color:var(--primary-500);font-weight:600;}
+
+/* Component Card */
+.comp-card{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:16px 20px;margin-bottom:14px;cursor:pointer;transition:all 0.2s ease;box-shadow:var(--shadow);position:relative;overflow:hidden;display:flex;gap:16px;align-items:stretch;}
+.comp-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.comp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;transition:background 0.2s ease;}
+.comp-card:hover::before{background:var(--primary-500);}
+.comp-card-left{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;}
+.comp-card-right{flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:100px;}
+.comp-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
+.comp-card-name{font-size:15px;font-weight:700;color:var(--primary-700);letter-spacing:-0.1px;}
+.comp-card-purl{font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);margin-top:3px;}
+.comp-card-desc{font-size:13px;color:var(--text-secondary);margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;line-height:1.6;}
+.comp-card-meta{display:flex;gap:16px;font-size:12px;color:var(--text-tertiary);font-weight:500;flex-wrap:wrap;align-items:center;}
+.comp-card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+
+/* ============================================================
+   DETAIL PAGE
+   ============================================================ */
+.detail-header{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:28px;margin-bottom:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.detail-header::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--primary-500);}
+.detail-header h2{font-size:22px;font-weight:700;margin-bottom:6px;letter-spacing:-0.2px;color:var(--text-primary);}
+.detail-header .purl{font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);margin-bottom:14px;}
+.detail-header .desc{font-size:14px;color:var(--text-secondary);margin-bottom:18px;line-height:1.7;}
+.detail-actions{display:flex;gap:10px;}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.info-item{display:flex;flex-direction:column;gap:4px;}
+.info-item .info-label{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.info-item .info-value{font-size:14px;font-weight:600;color:var(--text-primary);}
+
+/* ============================================================
+   VERSION ROW
+   ============================================================ */
+.version-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border:none;border-radius:var(--radius);margin-bottom:10px;cursor:pointer;transition:all 0.2s ease;background:var(--bg-elevated);box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.version-row:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.version-row:hover::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--primary-500);}
+.version-row .v-num{font-size:15px;font-weight:700;letter-spacing:-0.1px;}
+.version-row .v-meta{font-size:12px;color:var(--text-tertiary);margin-top:4px;font-weight:500;}
+
+/* ============================================================
+   DIMENSION CARD
+   ============================================================ */
+.dim-card{padding:16px 20px;border:none;border-radius:var(--radius);background:var(--bg-elevated);margin-bottom:12px;box-shadow:var(--shadow-sm);transition:box-shadow 0.2s ease;}
+.dim-card:hover{box-shadow:var(--shadow);}
+.dim-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.dim-card-title{font-size:14px;font-weight:700;color:var(--text-primary);}
+.dim-card-desc{font-size:12px;color:var(--text-tertiary);line-height:1.6;margin-bottom:10px;}
+
+/* ============================================================
+   SEARCH LAYOUT
+   ============================================================ */
+.search-layout{display:grid;grid-template-columns:220px 1fr 260px;gap:20px;padding:20px 24px 24px;align-items:flex-start;}
+.main-pane{min-width:0;}
+.side-pane{position:sticky;top:76px;}
+.cat-pane{background:var(--bg-elevated);border:none;border-radius:var(--radius);overflow:hidden;position:sticky;top:76px;max-height:calc(100vh - 96px);display:flex;flex-direction:column;box-shadow:var(--shadow);}
+.cat-pane-title{padding:16px 18px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;}
+.cat-list{flex:1;overflow-y:auto;padding:6px 0;}
+.cat-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:13px;color:var(--text-secondary);transition:all 0.12s ease;position:relative;font-weight:500;border-radius:0;margin:0 8px;width:calc(100% - 16px);border-radius:var(--radius-sm);}
+.cat-item:hover{background:var(--primary-50);color:var(--primary-700);}
+.cat-item.active{background:var(--primary-50);color:var(--primary-700);font-weight:600;}
+.cat-item.active::before{content:'';position:absolute;left:-8px;top:8px;bottom:8px;width:3px;background:var(--primary-500);border-radius:0 3px 3px 0;}
+.cat-item .cat-icon{width:18px;height:18px;flex-shrink:0;}
+.cat-item .cat-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.cat-item .cat-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cat-item .cat-count{font-size:11px;color:var(--text-tertiary);font-weight:600;background:var(--bg-surface);padding:2px 8px;border-radius:var(--radius-full);}
+.cat-item .cat-hot{background:var(--error);color:#fff;font-size:9px;padding:2px 6px;border-radius:var(--radius-sm);font-weight:700;}
+.cat-pane-foot{padding:12px 16px;font-size:11px;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);background:var(--bg-surface);font-weight:500;}
+
+/* Hot components */
+.hot-row{display:grid;grid-template-columns:32px 1fr auto;gap:12px;padding:12px 14px;border-radius:var(--radius);background:var(--bg-elevated);margin-bottom:10px;cursor:pointer;transition:all 0.15s ease;border:1px solid var(--border-subtle);align-items:center;}
+.hot-row:last-child{margin-bottom:0;}
+.hot-row:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--primary-200);background:var(--bg-surface);}
+.hot-row:hover .hot-name{color:var(--primary-700);}
+.hot-rank{width:32px;height:32px;border-radius:var(--radius);background:linear-gradient(135deg,#f0f0f0,#e8e8e8);color:var(--text-tertiary);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border-subtle);}
+.hot-rank.top{background:linear-gradient(135deg,#ff6b6b,#ee5a52);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(255,107,107,0.25);}
+.hot-name{font-size:13px;font-weight:700;color:var(--text-primary);transition:color 0.12s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.hot-desc{font-size:11px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px;font-weight:500;display:block;}
+.hot-score{display:flex;flex-direction:column;align-items:flex-end;line-height:1;}
+.hot-score .hs-val{font-size:20px;font-weight:700;letter-spacing:-0.5px;}
+.hot-score .hs-label{font-size:9px;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-top:3px;}
+
+/* ============================================================
+   GITEE STYLE (Code & Artifact)
+   ============================================================ */
+.gitee-repo-header{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);}
+.gitee-repo-title{display:flex;align-items:center;gap:14px;}
+.gitee-repo-icon{width:44px;height:44px;border-radius:var(--radius);background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(21,101,192,0.25);}
+.gitee-repo-name{font-size:16px;font-weight:700;letter-spacing:-0.1px;}
+.gitee-repo-id{font-size:11px;color:var(--text-tertiary);margin-top:3px;font-family:var(--font-mono);}
+.gitee-repo-stats{display:flex;gap:10px;align-items:center;}
+.gitee-stat-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-elevated);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s ease;color:var(--text-secondary);}
+.gitee-stat-btn:hover{border-color:var(--primary-500);color:var(--primary-700);background:var(--primary-50);}
+.gitee-stat-btn .num{background:var(--bg-surface);padding:2px 10px;border-radius:var(--radius-full);font-weight:700;color:var(--text-secondary);border:1px solid var(--border-subtle);font-size:11px;}
+.gitee-layout{display:grid;grid-template-columns:200px 1fr;gap:20px;}
+.gitee-side{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:10px 0;height:fit-content;position:sticky;top:76px;box-shadow:var(--shadow);}
+.gitee-side-item{display:flex;align-items:center;gap:12px;padding:10px 18px;font-size:13px;color:var(--text-secondary);cursor:pointer;border-left:3px solid transparent;font-weight:500;transition:all 0.12s ease;margin:0 8px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.gitee-side-item:hover{background:var(--primary-50);color:var(--primary-700);}
+.gitee-side-item.active{background:var(--primary-50);color:var(--primary-700);border-left-color:var(--primary-500);font-weight:600;}
+.gitee-side-item svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.gitee-side-item .badge{margin-left:auto;background:var(--bg-surface);color:var(--text-tertiary);padding:2px 8px;border-radius:var(--radius-full);font-size:11px;font-weight:600;border:1px solid var(--border-subtle);}
+.gitee-main{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);}
+.gitee-branch-bar{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--border-subtle);margin-bottom:0;}
+.gitee-branch-left{display:flex;align-items:center;gap:14px;font-size:13px;font-weight:500;}
+.gitee-branch-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-elevated);cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s ease;color:var(--text-secondary);}
+.gitee-branch-pill:hover{border-color:var(--primary-500);color:var(--primary-700);}
+.gitee-commit-bar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;color:var(--text-secondary);font-weight:500;}
+.gitee-file-row{display:grid;grid-template-columns:24px 1fr 2fr auto;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;transition:background 0.12s ease;}
+.gitee-file-row:last-child{border-bottom:0;}
+.gitee-file-row:hover{background:var(--primary-50);margin:0 -24px;padding-left:24px;padding-right:24px;border-radius:0;}
+.gitee-file-icon{color:var(--text-tertiary);}
+.gitee-file-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;}
+.gitee-file-name{color:var(--text-primary);font-weight:600;cursor:pointer;transition:color 0.12s ease;}
+.gitee-file-row:hover .gitee-file-name{color:var(--primary-700);}
+.gitee-file-msg{color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;}
+.gitee-file-time{color:var(--text-tertiary);font-size:12px;font-weight:500;}
+.gitee-readme{margin-top:24px;}
+.gitee-readme-cards{display:flex;gap:32px;padding:10px 4px 14px;border-bottom:1px solid var(--border-subtle);margin-bottom:24px;}
+.gitee-readme-card{display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 4px;border-bottom:2px solid transparent;margin-bottom:-15px;font-weight:500;transition:all 0.15s ease;color:var(--text-secondary);}
+.gitee-readme-card:hover{color:var(--text-primary);}
+.gitee-readme-card .rc-icon{width:18px;height:18px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);}
+.gitee-readme-card .rc-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.gitee-readme-card .rc-label{font-size:13px;}
+.gitee-readme-card.active{border-bottom-color:var(--primary-500);color:var(--primary-700);}
+.gitee-readme-card.active .rc-label,.gitee-readme-card.active .rc-icon{color:var(--primary-700);font-weight:600;}
+.gitee-readme-body{display:grid;grid-template-columns:180px 1fr;gap:28px;padding:0 4px;}
+.gitee-readme-toc{font-size:13px;font-weight:500;}
+.gitee-readme-toc a{display:block;padding:5px 0;color:var(--text-secondary);cursor:pointer;transition:color 0.12s ease;border-radius:var(--radius-sm);padding-left:8px;margin-left:-8px;}
+.gitee-readme-toc a:hover{color:var(--primary-700);background:var(--primary-50);}
+.gitee-readme-toc a.active{color:var(--primary-700);font-weight:600;background:var(--primary-50);}
+.gitee-readme-content h3{font-size:20px;margin:20px 0 10px;font-weight:700;letter-spacing:-0.2px;}
+.gitee-readme-content h4{font-size:16px;margin:16px 0 8px;font-weight:600;}
+.gitee-readme-content p{font-size:14px;color:var(--text-secondary);line-height:1.8;margin-bottom:10px;}
+
+/* ============================================================
+   GITEE ARTIFACT
+   ============================================================ */
+.gitee-art-header{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:18px 24px;margin-bottom:14px;display:flex;align-items:center;gap:20px;box-shadow:var(--shadow);}
+.gitee-art-title{font-size:20px;font-weight:700;letter-spacing:-0.2px;}
+.gitee-art-sub{font-size:12px;color:var(--text-tertiary);margin-top:4px;font-weight:500;}
+.gitee-art-search{flex:1;display:flex;gap:10px;align-items:center;justify-content:flex-end;}
+.gitee-art-filterbar{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:14px 24px;margin-bottom:14px;display:flex;gap:20px;align-items:center;box-shadow:var(--shadow);}
+.gitee-art-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;}
+.gitee-art-list{background:var(--bg-elevated);border:none;border-radius:var(--radius);overflow:hidden;height:fit-content;max-height:calc(100vh - 220px);overflow-y:auto;box-shadow:var(--shadow);}
+.gitee-art-item{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13px;cursor:pointer;border-left:3px solid transparent;font-weight:500;transition:all 0.12s ease;color:var(--text-secondary);}
+.gitee-art-item:hover{background:var(--primary-50);color:var(--primary-700);}
+.gitee-art-item.active{background:var(--primary-50);color:var(--primary-700);border-left-color:var(--primary-500);font-weight:600;}
+.gitee-art-item .arrow{color:var(--text-tertiary);font-size:10px;}
+.gitee-art-item .ico{width:20px;height:20px;background:var(--bg-surface);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border-subtle);}
+.gitee-art-item .ico svg{width:12px;height:12px;}
+.gitee-art-detail{background:var(--bg-elevated);border:none;border-radius:var(--radius);padding:0;box-shadow:var(--shadow);}
+.gitee-art-detail-head{padding:18px 24px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;}
+.gitee-art-detail-head h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;white-space:nowrap;letter-spacing:-0.1px;}
+.gitee-art-detail-head h3 svg{width:20px;height:20px;}
+.gitee-art-detail-head .actions{display:flex;gap:8px;color:var(--text-tertiary);}
+.gitee-art-detail-head .actions span{cursor:pointer;width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);transition:all 0.15s ease;}
+.gitee-art-detail-head .actions span:hover{background:var(--primary-50);color:var(--primary-700);}
+.gitee-art-detail-tabs{display:flex;border-bottom:1px solid var(--border-subtle);padding:0 24px;}
+.gitee-art-detail-tab{padding:12px 6px;margin-right:28px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text-tertiary);font-weight:500;transition:color 0.15s ease;}
+.gitee-art-detail-tab:hover{color:var(--text-secondary);}
+.gitee-art-detail-tab.active{color:var(--primary-700);border-bottom-color:var(--primary-500);font-weight:600;}
+.gitee-art-info{padding:24px;}
+.gitee-art-info-row{display:grid;grid-template-columns:120px 1fr;padding:12px 0;border-bottom:1px solid var(--border-subtle);font-size:13px;font-weight:500;}
+.gitee-art-info-row:last-child{border-bottom:0;}
+.gitee-art-info-row .lbl{color:var(--text-tertiary);font-weight:600;}
+.gitee-art-info-row .val{color:var(--text-primary);display:flex;align-items:center;gap:8px;font-weight:500;}
+.gitee-art-info-row .val a{color:var(--primary-700);text-decoration:none;font-weight:600;}
+.gitee-art-info-row .val a:hover{text-decoration:underline;}
+.gitee-art-relate{margin-top:20px;padding:0 24px 24px;}
+.gitee-art-relate-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin-bottom:14px;padding-left:10px;border-left:3px solid var(--primary-500);letter-spacing:-0.1px;}
+.copy-icon{color:var(--text-tertiary);cursor:pointer;font-size:12px;transition:color 0.12s ease;}
+.copy-icon:hover{color:var(--primary-700);}
+
+/* ============================================================
+   GRAPH
+   ============================================================ */
+.graph-container{display:grid;grid-template-columns:1fr 280px;gap:0;background:var(--bg-surface);border:none;border-radius:var(--radius);overflow:hidden;height:560px;box-shadow:var(--shadow);}
+.graph-canvas{position:relative;background:var(--bg-surface);overflow:hidden;}
+.graph-side{background:var(--bg-elevated);border-left:1px solid var(--border-subtle);padding:24px;overflow-y:auto;}
+.graph-side h4{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.4px;}
+.graph-side h4 .arr{color:var(--text-tertiary);}
+.graph-side .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+.graph-pill{display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s ease;}
+.graph-pill.gray{background:#6B7280;color:#fff;}
+.graph-pill.purple{background:#8B5CF6;color:#fff;}
+.graph-pill.pink{background:#F472B6;color:#fff;}
+.graph-pill.rel{background:var(--bg-surface);color:var(--text-secondary);border:1px solid var(--border-subtle);}
+.graph-pill.rel:hover{background:var(--primary-50);color:var(--primary-700);border-color:var(--primary-200);}
+.graph-stat{font-size:13px;color:var(--text-secondary);margin-top:10px;font-weight:500;}
+.graph-zoom{position:absolute;right:16px;bottom:16px;background:var(--bg-elevated);border:1px solid var(--border-subtle);border-radius:var(--radius);box-shadow:var(--shadow-md);display:flex;flex-direction:column;overflow:hidden;}
+.graph-zoom button{width:38px;height:38px;background:none;border:none;border-bottom:1px solid var(--border-subtle);cursor:pointer;color:var(--text-tertiary);font-size:14px;transition:all 0.15s ease;}
+.graph-zoom button:last-child{border-bottom:0;}
+.graph-zoom button:hover{color:var(--primary-700);background:var(--primary-50);}
+.graph-node text{font-size:10px;fill:#fff;font-weight:600;pointer-events:none;}
+.graph-edge{stroke:var(--border-strong);stroke-width:1.5;fill:none;}
+.graph-edge.similar{stroke:var(--primary-500);stroke-dasharray:4 3;}
+.graph-edge-label{font-size:10px;fill:var(--text-tertiary);font-weight:500;}
+
+/* ============================================================
+   PORTAL PAGE
+   ============================================================ */
+.portal{min-height:100vh;background:var(--bg-elevated);}
+.portal-header{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 56px;border-bottom:1px solid var(--border-subtle);background:var(--bg-elevated);position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);}
+.portal-logo{display:flex;align-items:center;gap:14px;}
+.portal-logo .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--primary-500),var(--primary-700));border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;box-shadow:0 2px 10px rgba(21,101,192,0.30);}
+.portal-logo .logo-text{font-size:16px;font-weight:700;color:var(--text-primary);line-height:1.3;letter-spacing:-0.2px;}
+.portal-logo .logo-text small{font-size:12px;font-weight:500;color:var(--text-tertiary);display:block;margin-top:2px;}
+.portal-nav{display:flex;gap:36px;font-size:14px;color:var(--text-secondary);font-weight:500;}
+.portal-nav a{cursor:pointer;color:var(--text-secondary);transition:color 0.15s ease;text-decoration:none;}
+.portal-nav a:hover{color:var(--primary-700);}
+.portal-hero{padding:100px 56px;background:linear-gradient(135deg,var(--primary-50) 0%,var(--bg-elevated) 60%,var(--bg) 100%);}
+.portal-hero-inner{max-width:1100px;margin:0 auto;text-align:center;}
+.portal-hero h1{font-size:42px;font-weight:800;color:var(--text-primary);margin-bottom:20px;line-height:1.25;letter-spacing:-1px;}
+.portal-hero p{font-size:17px;color:var(--text-secondary);max-width:720px;margin:0 auto 36px;line-height:1.75;font-weight:400;}
+.portal-hero .cta{display:inline-flex;gap:14px;}
+.portal-section{padding:80px 56px;}
+.portal-section.alt{background:var(--bg);}
+.portal-section-inner{max-width:1100px;margin:0 auto;}
+.portal-section h2{font-size:30px;font-weight:800;text-align:center;margin-bottom:10px;letter-spacing:-0.5px;color:var(--text-primary);}
+.portal-section .subtitle{text-align:center;color:var(--text-tertiary);font-size:15px;margin-bottom:48px;font-weight:500;}
+.portal-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+.portal-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
+.portal-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;}
+.portal-card{background:var(--bg-elevated);border:none;border-radius:var(--radius-md);padding:28px;transition:all 0.25s ease;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.portal-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-3px);}
+.portal-card:hover::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--primary-500);}
+.portal-card .icon-wrap{width:48px;height:48px;border-radius:var(--radius);background:var(--primary-50);color:var(--primary-700);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:all 0.2s ease;}
+.portal-card:hover .icon-wrap{background:var(--primary-500);color:#fff;transform:scale(1.05);}
+.portal-card .icon-wrap svg{width:24px;height:24px;}
+.portal-card h3{font-size:17px;font-weight:700;margin-bottom:10px;letter-spacing:-0.2px;}
+.portal-card p{font-size:14px;color:var(--text-secondary);line-height:1.7;}
+.portal-cat{background:var(--bg-elevated);border:none;border-radius:var(--radius-md);padding:28px 20px;text-align:center;transition:all 0.25s ease;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.portal-cat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);}
+.portal-cat:hover::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--primary-500);}
+.portal-cat .cat-name{font-size:20px;font-weight:800;color:var(--primary-700);margin-bottom:6px;letter-spacing:-0.3px;}
+.portal-cat .cat-desc{font-size:13px;color:var(--text-tertiary);margin-bottom:10px;font-weight:500;}
+.portal-cat .cat-count{font-size:12px;color:var(--text-secondary);font-weight:600;}
+.portal-stat{text-align:center;}
+.portal-stat .num{font-size:40px;font-weight:800;color:var(--primary-700);letter-spacing:-1px;line-height:1;}
+.portal-stat .lbl{font-size:14px;color:var(--text-secondary);margin-top:8px;font-weight:500;}
+.portal-footer{background:#111827;color:#9CA3AF;padding:40px 56px;text-align:center;font-size:13px;font-weight:500;}
+.portal-footer a{color:var(--sidebar-text);transition:color 0.15s ease;}
+.portal-footer a:hover{color:var(--sidebar-text-active);}
+
+/* ============================================================
+   LOGIN MODAL
+   ============================================================ */
+.login-modal{width:400px;border-radius:var(--radius-lg);}
+.login-modal .modal-body{padding:32px;}
+.login-modal .login-title{font-size:20px;font-weight:700;margin-bottom:8px;text-align:center;letter-spacing:-0.2px;}
+.login-modal .login-sub{font-size:13px;color:var(--text-tertiary);text-align:center;margin-bottom:28px;font-weight:500;}
+.login-modal .form-group{margin-bottom:16px;}
+.login-modal .btn-primary{width:100%;justify-content:center;height:42px;font-size:15px;margin-top:10px;border-radius:var(--radius-sm);}
+.login-modal .login-extra{display:flex;justify-content:space-between;font-size:13px;color:var(--text-tertiary);margin-top:16px;font-weight:500;}
+.login-modal .login-extra a{color:var(--primary-700);cursor:pointer;text-decoration:none;transition:color 0.15s ease;}
+.login-modal .login-extra a:hover{color:var(--primary-900);text-decoration:underline;}
+
+/* ============================================================
+   TRUST SCORE (Legacy support + new circular)
+   ============================================================ */
+.trust-score{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--radius-full);background:var(--success-50);border:1px solid var(--success-100);font-weight:600;}
+.trust-score .ts-label{font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;}
+.trust-score .ts-val{font-size:20px;font-weight:700;line-height:1;letter-spacing:-0.5px;}
+.trust-score.warn{background:var(--warning-50);border-color:var(--warning-100);}
+.trust-score.danger{background:var(--error-50);border-color:var(--error-100);}
+
+/* ============================================================
+   LIFECYCLE
+   ============================================================ */
+.lifecycle-flow{display:flex;align-items:center;justify-content:center;gap:0;margin:28px 0;}
+.lifecycle-step{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.lifecycle-step .step-circle{width:52px;height:52px;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--border);color:var(--text-tertiary);background:var(--bg-elevated);transition:all 0.3s ease;box-shadow:var(--shadow-sm);}
+.lifecycle-step .step-circle.active{background:linear-gradient(135deg,var(--primary-500),var(--primary-700));color:#fff;border-color:transparent;box-shadow:0 2px 10px rgba(21,101,192,0.30);}
+.lifecycle-step .step-circle.done{background:linear-gradient(135deg,var(--success),#1B5E20);color:#fff;border-color:transparent;box-shadow:0 2px 10px rgba(46,125,50,0.25);}
+.lifecycle-step .step-label{font-size:12px;color:var(--text-secondary);font-weight:600;}
+.lifecycle-arrow{width:56px;height:2px;background:var(--border);margin-bottom:24px;position:relative;}
+.lifecycle-arrow.done{background:linear-gradient(90deg,var(--success),#1B5E20);}
+.lifecycle-arrow::after{content:'';position:absolute;right:-4px;top:-3px;width:0;height:0;border-left:6px solid var(--border);border-top:4px solid transparent;border-bottom:4px solid transparent;}
+.lifecycle-arrow.done::after{border-left-color:var(--success);}
+
+/* ============================================================
+   UPLOAD / VERIFY
+   ============================================================ */
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius-md);padding:48px;text-align:center;color:var(--text-tertiary);cursor:pointer;transition:all 0.2s ease;background:var(--bg-surface);}
+.upload-area:hover{border-color:var(--primary-500);background:var(--primary-50);color:var(--primary-700);}
+.upload-area svg{width:44px;height:44px;margin-bottom:10px;stroke:var(--text-tertiary);}
+.upload-area:hover svg{stroke:var(--primary-500);}
+.verify-result{padding:28px;border-radius:var(--radius);text-align:center;margin-top:20px;font-weight:500;}
+.verify-result.success{background:var(--success-50);border:1px solid var(--success-100);color:var(--success);}
+.verify-result.fail{background:var(--error-50);border:1px solid var(--error-100);color:var(--error);}
+.verify-result h3{font-size:17px;font-weight:700;margin-bottom:6px;}
+.verify-result p{font-size:13px;color:var(--text-secondary);font-weight:500;}
+
+/* ============================================================
+   TREE / PLACEHOLDER
+   ============================================================ */
+.tree-placeholder{background:var(--bg-surface);border-radius:var(--radius);padding:48px;text-align:center;color:var(--text-tertiary);border:2px dashed var(--border-subtle);font-weight:500;}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:var(--radius-full);}
+::-webkit-scrollbar-thumb:hover{background:var(--text-tertiary);}
+
+/* ============================================================
+   SELECTION
+   ============================================================ */
+::selection{background:var(--primary-200);color:var(--primary-900);}
+
+
+/* === Inline-style replacements === */
+.card--flush{padding:0;overflow:hidden;}
+.card--flush .card-title{padding:16px 20px;margin-bottom:0;border-bottom:1px solid var(--border-subtle);}
+.width-sm{width:120px;}
+.width-md{width:140px;}
+.width-lg{width:160px;}
+.width-xl{width:180px;}
+.width-2xl{width:200px;}
+.input--fixed{width:140px;}
+.mb-12{margin-bottom:12px;}
+.mt-12{margin-top:12px;}
+.ml-6{margin-left:6px;}
+.tag--inline{font-size:12px;vertical-align:middle;}
+.text-mono{font-family:var(--font-mono);font-size:12px;}
+.pill-tag{font-size:11px;color:var(--text-tertiary);}
+.pill-tag--active{font-size:11px;color:var(--text-tertiary);font-weight:600;}
+.btn-group{display:flex;align-items:center;gap:8px;}
+/* gap-* containers flow inline (not flex), so their gap is inert — give adjacent buttons real spacing */
+.gap-6>.btn+.btn{margin-left:6px;}
+.gap-8>.btn+.btn{margin-left:8px;}
+.gap-10>.btn+.btn{margin-left:10px;}
+.gap-12>.btn+.btn{margin-left:12px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:20px;}
+.stat-grid--5{grid-template-columns:repeat(5,1fr);}
+.page-actions{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.version-tag{font-size:12px;vertical-align:middle;}
+.cell-wrap{max-width:280px;white-space:normal;color:var(--text-secondary);font-size:12px;line-height:1.6;}
+.cell-mono{font-family:var(--font-mono);font-size:12px;color:var(--text-tertiary);}
+.cell-actions{width:160px;}
+.cell-actions-sm{width:120px;}
+.cell-actions-xs{width:80px;}
+.toolbar{padding:16px 20px 0;}
+.toolbar--flex{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 0;}
+.gap-10{gap:10px;}
+.gap-14{gap:14px;}
+.gap-20{gap:20px;}
+.flex{display:flex;}
+.flex-col{flex-direction:column;}
+.items-start{align-items:flex-start;}
+.items-center{align-items:center;}
+.justify-between{justify-content:space-between;}
+.flex-1{flex:1;}
+.shrink-0{flex-shrink:0;}
+.min-w-0{min-width:0;}
+.overflow-hidden{overflow:hidden;}
+.whitespace-nowrap{white-space:nowrap;}
+.truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rounded-full{border-radius:var(--radius-full);}
+.cursor-pointer{cursor:pointer;}
+.text-success{color:var(--success);}
+.text-warning{color:var(--warning);}
+.text-error{color:var(--error);}
+.text-primary{color:var(--primary-700);}
+.text-primary-500{color:var(--primary-500);}
+.font-semibold{font-weight:600;}
+.font-bold{font-weight:700;}
+.text-xs{font-size:11px;}
+.text-sm{font-size:12px;}
+.text-base{font-size:14px;}
+.leading-tight{line-height:1.3;}
+.leading-snug{line-height:1.5;}
+.leading-relaxed{line-height:1.7;}
+.p-12{padding:12px;}
+.p-16{padding:16px;}
+.p-20{padding:20px;}
+.py-12{padding-top:12px;padding-bottom:12px;}
+.px-16{padding-left:16px;padding-right:16px;}
+.py-16{padding-top:16px;padding-bottom:16px;}
+.px-20{padding-left:20px;padding-right:20px;}
+.py-20{padding-top:20px;padding-bottom:20px;}
+.py-24{padding-top:24px;padding-bottom:24px;}
+.px-24{padding-left:24px;padding-right:24px;}
+.px-28{padding-left:28px;padding-right:28px;}
+.py-28{padding-top:28px;padding-bottom:28px;}
+.px-56{padding-left:56px;padding-right:56px;}
+.py-56{padding-top:56px;padding-bottom:56px;}
+.py-80{padding-top:80px;padding-bottom:80px;}
+.m-0{margin:0;}
+.mt-0{margin-top:0;}
+.mb-0{margin-bottom:0;}
+.ml-auto{margin-left:auto;}
+.mr-auto{margin-right:auto;}
+.mx-auto{margin-left:auto;margin-right:auto;}
+.mt-2{margin-top:2px;}
+.mt-3{margin-top:3px;}
+.mt-4{margin-top:4px;}
+.mt-6{margin-top:6px;}
+.mt-8{margin-top:8px;}
+.mb-2{margin-bottom:2px;}
+.mb-4{margin-bottom:4px;}
+.mb-6{margin-bottom:6px;}
+.mb-8{margin-bottom:8px;}
+.mb-10{margin-bottom:10px;}
+.mb-12{margin-bottom:12px;}
+.mb-14{margin-bottom:14px;}
+.mb-18{margin-bottom:18px;}
+.mb-28{margin-bottom:28px;}
+.ml-4{margin-left:4px;}
+.ml-6{margin-left:6px;}
+.ml-8{margin-left:8px;}
+.ml-10{margin-left:10px;}
+.ml-12{margin-left:12px;}
+.ml-14{margin-left:14px;}
+.ml-24{margin-left:24px;}
+.mr-4{margin-right:4px;}
+.mr-6{margin-right:6px;}
+.mr-8{margin-right:8px;}
+.mr-10{margin-right:10px;}
+.mr-16{margin-right:16px;}
+.mr-20{margin-right:20px;}
+.mr-24{margin-right:24px;}
+.mr-28{margin-right:28px;}
+.gap-4{gap:4px;}
+.gap-6{gap:6px;}
+.gap-10{gap:10px;}
+.gap-14{gap:14px;}
+.gap-18{gap:18px;}
+.gap-20{gap:20px;}
+.gap-24{gap:24px;}
+.gap-28{gap:28px;}
+.gap-32{gap:32px;}
+.grid-cols-2{grid-template-columns:repeat(2,1fr);}
+.grid-cols-3{grid-template-columns:repeat(3,1fr);}
+.grid-cols-4{grid-template-columns:repeat(4,1fr);}
+.grid-cols-5{grid-template-columns:repeat(5,1fr);}
+.grid-cols-6{grid-template-columns:repeat(6,1fr);}
+.grid-gap-12{gap:12px;}
+.grid-gap-16{gap:16px;}
+.grid-gap-20{gap:20px;}
+.grid-gap-24{gap:24px;}
+.grid-gap-28{gap:28px;}
+.grid-gap-32{gap:32px;}
+.border-t{border-top:1px solid var(--border-subtle);}
+.border-b{border-bottom:1px solid var(--border-subtle);}
+.border-l{border-left:1px solid var(--border-subtle);}
+.border-r{border-right:1px solid var(--border-subtle);}
+.bg-surface{background:var(--bg-surface);}
+.bg-elevated{background:var(--bg-elevated);}
+.bg-primary-50{background:var(--primary-50);}
+.w-16{width:16px;}
+.w-18{width:18px;}
+.w-20{width:20px;}
+.w-24{width:24px;}
+.w-32{width:32px;}
+.w-34{width:34px;}
+.w-36{width:36px;}
+.w-40{width:40px;}
+.w-44{width:44px;}
+.w-48{width:48px;}
+.w-52{width:52px;}
+.h-16{height:16px;}
+.h-18{height:18px;}
+.h-20{height:20px;}
+.h-24{height:24px;}
+.h-32{height:32px;}
+.h-34{height:34px;}
+.h-36{height:36px;}
+.h-40{height:40px;}
+.h-44{height:44px;}
+.h-48{height:48px;}
+.h-52{height:52px;}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const app = document.getElementById('app');
+
+// State
+let currentUser = null; // null = 未登录，对象 = 已登录
+let currentPage = 'portal'; // 默认门户页
+let currentModal = null;
+let currentDrawer = null;
+let searchResults = true;
+let detailTab = 'overview';
+let versionDetailTab = 'code';
+let currentVersion = '4.9.0';
+let logTab = 'login';
+let componentManageTab = 'basic';
+let searchSort = 'relevance';
+let selectedCodeComp = null;
+let selectedArtifactComp = null;
+let selectedManageComp = null;     // 组件信息管理 - 当前编辑的组件
+let selectedManageVersion = null;  // 组件信息管理 - 当前编辑的版本（null = 编辑组件维度）
+let manageCompTab = 'basic';       // 组件维度 tab：basic / similar / lifecycle
+let manageVerTab = 'basic';        // 版本维度 tab：basic / vuln / trust
+let verifyMode = 'single';         // 验签模式：single / batch
+let lifecycleTab = 'pending';      // 生命周期主 tab：pending / processed / status
+let lifecycleProcessedFilter = 'all'; // 处理历史筛选：all / approved / rejected
+let lifecycleStatusFilter = 'all'; // 组件状态筛选：all / pending / done / update / retired
+
+// ========== 漏洞数据结构 ==========
+const vulnerabilityDB = {
+  'OpenCV': {
+    '4.9.0': [
+      {id:'CVE-2025-00888', level:'高', levelColor:'tag-red', desc:'深度学习模块中存在越界写，可能导致代码执行', cwe:'CWE-787', disclose:'2025-03-10', fix:'升级到 4.9.1 或应用补丁', patch:'未发布', poc:'已发布', refs:['https://nvd.nist.gov/vuln/detail/CVE-2025-00888'], foundTime:'2026-05-20', status:'持续监控'},
+      {id:'CVE-2025-00234', level:'低', levelColor:'tag-blue', desc:'特定输入下存在信息泄露风险', cwe:'CWE-200', disclose:'2025-02-10', fix:'升级到 4.9.0 及以上版本', patch:'已发布', poc:'未公开', refs:['https://nvd.nist.gov/vuln/detail/CVE-2025-00234'], foundTime:'2025-02-15', status:'持续监控'},
+    ],
+    '4.8.1': [
+      {id:'CVE-2024-12345', level:'中', levelColor:'tag-orange', desc:'缓冲区溢出漏洞，可能导致拒绝服务', cwe:'CWE-25', disclose:'2024-08-15', fix:'升级到 4.9.0 及以上版本', patch:'已发布', poc:'已发布', refs:['https://nvd.nist.gov/vuln/detail/CVE-2024-12345'], foundTime:'2024-09-01', status:'持续监控'},
+      {id:'CVE-2025-00234', level:'低', levelColor:'tag-blue', desc:'特定输入下存在信息泄露风险', cwe:'CWE-200', disclose:'2025-02-10', fix:'升级到 4.9.0 及以上版本', patch:'已发布', poc:'未公开', refs:['https://nvd.nist.gov/vuln/detail/CVE-2025-00234'], foundTime:'2025-02-15', status:'持续监控'},
+    ],
+    '4.8.0': [
+      {id:'CVE-2024-12345', level:'中', levelColor:'tag-orange', desc:'缓冲区溢出漏洞，可能导致拒绝服务', cwe:'CWE-25', disclose:'2024-08-15', fix:'升级到 4.9.0 及以上版本', patch:'已发布', poc:'已发布', refs:['https://nvd.nist.gov/vuln/detail/CVE-2024-12345'], foundTime:'2024-09-01', status:'持续监控'},
+    ],
+  },
+  'Boost': {
+    '1.84.0': [
+      {id:'CVE-2025-00666', level:'中', levelColor:'tag-orange', desc:'asio 模块存在竞争条件', cwe:'CWE-362', disclose:'2025-01-20', fix:'升级到 1.84.1 及以上版本', patch:'已发布', poc:'未公开', refs:['https://nvd.nist.gov/vuln/detail/CVE-2025-00666'], foundTime:'2025-02-01', status:'持续监控'},
+    ],
+    '1.83.0': [],
+  },
+  'Eigen': {
+    '3.4.0': [],
+    '3.3.9': [
+      {id:'CVE-2024-09999', level:'低', levelColor:'tag-blue', desc:'稀疏矩阵求解器存在除零异常', cwe:'CWE-369', disclose:'2024-11-05', fix:'升级到 3.4.0 及以上版本', patch:'已发布', poc:'未公开', refs:['https://nvd.nist.gov/vuln/detail/CVE-2024-09999'], foundTime:'2024-11-10', status:'持续监控'},
+    ],
+  },
+  'Qt': {
+    '6.7.0': [
+      {id:'CVE-2025-01111', level:'高', levelColor:'tag-red', desc:'QML 引擎存在类型混淆漏洞', cwe:'CWE-843', disclose:'2025-04-01', fix:'升级到 6.7.1 及以上版本', patch:'未发布', poc:'已发布', refs:['https://nvd.nist.gov/vuln/detail/CVE-2025-01111'], foundTime:'2026-05-18', status:'持续监控'},
+    ],
+  },
+  'FreeCAD-Core': {
+    '0.21.0': [
+      {id:'CVE-2024-05555', level:'中', levelColor:'tag-orange', desc:'STEP 文件解析存在路径遍历', cwe:'CWE-22', disclose:'2024-06-20', fix:'升级到 0.21.1 及以上版本', patch:'已发布', poc:'已发布', refs:['https://nvd.nist.gov/vuln/detail/CVE-2024-05555'], foundTime:'2024-07-01', status:'持续监控'},
+    ],
+  },
+};
+
+// 风险计算辅助函数
+function getVulns(compName, version) {
+  return (vulnerabilityDB[compName] && vulnerabilityDB[compName][version]) ? vulnerabilityDB[compName][version] : [];
+}
+
+function calcRiskLevel(vulns) {
+  if (!vulns || vulns.length === 0) return {level:'safe', label:'安全', color:'var(--success)', badge:'tag-green'};
+  const hasHigh = vulns.some(v => v.level === '高');
+  const hasPoc = vulns.some(v => v.poc === '已发布');
+  if (hasHigh || hasPoc) return {level:'high', label:'高危', color:'var(--error)', badge:'tag-red'};
+  const hasMid = vulns.some(v => v.level === '中');
+  if (hasMid) return {level:'medium', label:'中危', color:'var(--warning)', badge:'tag-orange'};
+  return {level:'low', label:'低危', color:'var(--primary-500)', badge:'tag-blue'};
+}
+
+function getRiskSummary(vulns) {
+  const rl = calcRiskLevel(vulns);
+  const high = vulns.filter(v=>v.level==='高').length;
+  const mid = vulns.filter(v=>v.level==='中').length;
+  const low = vulns.filter(v=>v.level==='低').length;
+  const pocCount = vulns.filter(v=>v.poc==='已发布').length;
+  const noPatch = vulns.filter(v=>v.patch!=='已发布').length;
+  let advice = '';
+  if (rl.level==='high') advice = `存在 ${high} 个高危漏洞且 ${pocCount} 个 PoC 已公开，建议谨慎使用或升级版本`;
+  else if (rl.level==='medium') advice = `存在 ${mid} 个中危漏洞，建议关注修复进展`;
+  else if (rl.level==='low') advice = `存在 ${low} 个低危漏洞，风险可控`;
+  else advice = '当前版本未发现已知漏洞';
+  return {rl, high, mid, low, total:vulns.length, pocCount, noPatch, advice};
+}
+
+function getSecurityCalc(vulns) {
+  const deductions = [];
+  let score = 100;
+  vulns.forEach(v => {
+    if (v.level==='高') { score -= 15; deductions.push({reason:`高危漏洞 ${v.id}`, points:-15}); }
+    else if (v.level==='中') { score -= 8; deductions.push({reason:`中危漏洞 ${v.id}`, points:-8}); }
+    else { score -= 3; deductions.push({reason:`低危漏洞 ${v.id}`, points:-3}); }
+    if (v.poc==='已发布') { score -= 5; deductions.push({reason:`${v.id} PoC已发布`, points:-5}); }
+    if (v.patch!=='已发布') { score -= 3; deductions.push({reason:`${v.id} 补丁未发布`, points:-3}); }
+  });
+  return {baseScore:100, deductions, calculated:Math.max(0, score), formulaVersion:'v0.1-preview'};
+}
+
+function isNewVuln(v) {
+  return v.foundTime && new Date(v.foundTime) >= new Date('2026-05-04');
+}
+
+function getAlerts() {
+  const alerts = [];
+  logs.download.forEach(d => {
+    const parts = d.component.split('@');
+    const name = parts[0], ver = parts[1];
+    getVulns(name, ver).filter(isNewVuln).forEach(v => {
+      if (!alerts.find(a => a.source==='download' && a.component===name && a.version===ver && a.vuln.id===v.id))
+        alerts.push({source:'download', component:name, version:ver, vuln:v, user:d.user, time:d.time});
+    });
+  });
+  components.slice(0,3).forEach(c => {
+    const ver = c.purl.split('@')[1];
+    getVulns(c.name, ver).filter(isNewVuln).forEach(v => {
+      if (!alerts.find(a => a.source==='shortlist' && a.component===c.name && a.version===ver && a.vuln.id===v.id))
+        alerts.push({source:'shortlist', component:c.name, version:ver, vuln:v, listName:'工业视觉项目组件清单'});
+    });
+  });
+  return alerts;
+}
+
+// Mock data
+const components = [
+  {name:'OpenCV', purl:'pkg:opencv/opencv@4.9.0', desc:'Open Source Computer Vision Library，提供图像处理、视频分析、机器学习等功能模块，广泛应用于工业视觉检测和智能制造领域。', downloads:12580, updated:'2025-12-15', tags:['图像处理','C++','MIT'], status:'存储', score:92, category:'基础库'},
+  {name:'Boost', purl:'pkg:boostorg/boost@1.84.0', desc:'Boost C++ Libraries，提供大量通用C++库，涵盖字符串处理、容器、算法、并发等，是工业软件开发的重要基础依赖。', downloads:9320, updated:'2025-11-20', tags:['C++','通用库','BSL-1.0'], status:'存储', score:88, category:'基础库'},
+  {name:'Eigen', purl:'pkg:eigenteam/eigen@3.4.0', desc:'C++线性代数库，支持矩阵、向量运算，广泛应用于机器人控制、数值仿真和科学计算等工业软件场景。', downloads:7650, updated:'2025-10-08', tags:['线性代数','C++','MPL-2.0'], status:'存储', score:95, category:'数学计算'},
+  {name:'Qt', purl:'pkg:qt/qtbase@6.7.0', desc:'跨平台C++图形界面框架，支持桌面/嵌入式GUI开发，在工业控制系统和CAD软件中有广泛应用。', downloads:15200, updated:'2026-01-10', tags:['GUI','C++','LGPL-3.0'], status:'存储', score:85, category:'界面框架'},
+  {name:'FreeCAD-Core', purl:'pkg:FreeCAD/FreeCAD@0.21.0', desc:'开源参数化3D CAD建模内核，支持零件设计、装配体和工程图，适用于机械设计和制造业。', downloads:4380, updated:'2025-09-22', tags:['CAD','Python','LGPL-2.1'], status:'引入', score:78, category:'CAD引擎'},
+];
+
+// 版本可信评分（每个组件多版本）
+const componentVersions = {
+  'OpenCV': [
+    {version:'4.9.0', released:'2025-12-15', changelog:'新增深度学习推理模块优化', downloads:5200, score:92, isLatest:true},
+    {version:'4.8.1', released:'2025-08-20', changelog:'修复安全漏洞 CVE-2024-12345', downloads:4380, score:88, isLatest:false},
+    {version:'4.8.0', released:'2025-06-10', changelog:'新增 CUDA 12 支持', downloads:3000, score:85, isLatest:false},
+  ],
+  'Boost': [
+    {version:'1.84.0', released:'2025-11-20', changelog:'新增协程库优化', downloads:5100, score:88, isLatest:true},
+    {version:'1.83.0', released:'2025-06-12', changelog:'核心库性能改进', downloads:4220, score:86, isLatest:false},
+  ],
+  'Eigen': [
+    {version:'3.4.0', released:'2025-10-08', changelog:'稀疏矩阵优化', downloads:7650, score:95, isLatest:true},
+    {version:'3.3.9', released:'2024-12-04', changelog:'稳定性修复', downloads:3800, score:90, isLatest:false},
+  ],
+};
+
+// 可信评估6个维度（占位，待一所提供正式标准）
+const trustDimensions = [
+  {key:'codeQuality', label:'代码质量', desc:'评估组件代码的规范性、可读性、复杂度及静态分析结果，反映代码工程化水平。'},
+  {key:'security', label:'安全漏洞', desc:'统计组件历史与当前已知CVE漏洞数量、严重程度，以及修复响应速度。'},
+  {key:'license', label:'许可证合规', desc:'识别组件许可证类型，分析许可证组合冲突与商业使用合规风险。'},
+  {key:'community', label:'社区活跃度', desc:'评估贡献者数量、Issue 响应速度、PR 合并周期、Star/Fork 等社区指标。'},
+  {key:'maintenance', label:'维护性', desc:'分析提交频率、版本发布节奏、Issue 关闭率，反映组件长期维护可靠性。'},
+  {key:'docs', label:'文档完整性', desc:'评估 README、API 文档、示例代码、变更日志的覆盖度与可读性。'},
+];
+
+// 各版本6维度评分（security 为静态值，原型中同时展示 securityCalc 预览计算）
+const versionTrustScores = {
+  '4.9.0': {codeQuality:95, security:88, license:100, community:90, maintenance:92, docs:85, securityCalc:{baseScore:100, deductions:[{reason:'高危漏洞 CVE-2025-00888', points:-15},{reason:'CVE-2025-00888 PoC已发布', points:-5},{reason:'CVE-2025-00888 补丁未发布', points:-3},{reason:'低危漏洞 CVE-2025-00234', points:-3}], calculated:74, formulaVersion:'v0.1-preview'}},
+  '4.8.1': {codeQuality:92, security:80, license:100, community:88, maintenance:90, docs:82, securityCalc:{baseScore:100, deductions:[{reason:'中危漏洞 CVE-2024-12345', points:-8},{reason:'CVE-2024-12345 PoC已发布', points:-5},{reason:'低危漏洞 CVE-2025-00234', points:-3}], calculated:84, formulaVersion:'v0.1-preview'}},
+  '4.8.0': {codeQuality:90, security:75, license:100, community:85, maintenance:85, docs:80, securityCalc:{baseScore:100, deductions:[{reason:'中危漏洞 CVE-2024-12345', points:-8},{reason:'CVE-2024-12345 PoC已发布', points:-5}], calculated:87, formulaVersion:'v0.1-preview'}},
+};
+
+const users = [
+  {id:'U001', name:'张工', role:'普通用户', tenant:'公网租户', status:'启用', email:'zhang@example.com'},
+  {id:'U002', name:'李管理', role:'组件管理员', tenant:'中电集团', status:'启用', email:'li@example.com'},
+  {id:'U003', name:'王审计', role:'安全审计人员', tenant:'公网租户', status:'启用', email:'wang@example.com'},
+  {id:'U004', name:'赵平台', role:'平台管理员', tenant:'公网租户', status:'启用', email:'zhao@example.com'},
+  {id:'U005', name:'陈工', role:'普通用户', tenant:'航天科工', status:'禁用', email:'chen@example.com'},
+];
+
+const tenants = [
+  {id:'T001', name:'公网租户', status:'启用', users:128, components:560, created:'2025-06-01'},
+  {id:'T002', name:'中电集团', status:'启用', users:45, components:230, created:'2025-07-15'},
+  {id:'T003', name:'航天科工', status:'启用', users:32, components:180, created:'2025-08-01'},
+  {id:'T004', name:'中船重工', status:'启用', users:28, components:150, created:'2025-08-20'},
+  {id:'T005', name:'一汽集团', status:'停用', users:15, components:90, created:'2025-09-10'},
+];
+
+const roles = [
+  {id:'R001', name:'超级管理员', desc:'系统预置，全量权限', users:2, editable:false},
+  {id:'R002', name:'平台管理员', desc:'平台管理与运维', users:4, editable:true},
+  {id:'R003', name:'组件管理员', desc:'组件数据维护与治理', users:8, editable:true},
+  {id:'R004', name:'安全审计人员', desc:'组件可信验证与审查', users:5, editable:true},
+  {id:'R005', name:'普通用户', desc:'组件检索与使用', users:186, editable:true},
+];
+
+const logs = {
+  login:[
+    {time:'2026-04-08 09:12:33',user:'张工',ip:'192.168.1.101',result:'成功'},
+    {time:'2026-04-08 09:08:21',user:'李管理',ip:'192.168.1.102',result:'成功'},
+    {time:'2026-04-08 08:55:10',user:'陈工',ip:'10.0.0.55',result:'失败-账户禁用'},
+    {time:'2026-04-07 17:30:45',user:'王审计',ip:'192.168.1.103',result:'成功'},
+  ],
+  download:[
+    {time:'2026-04-08 10:15:22',user:'张工',component:'OpenCV@4.9.0',type:'制品',size:'56.2 MB'},
+    {time:'2026-04-08 09:42:18',user:'李管理',component:'Eigen@3.4.0',type:'代码',size:'12.8 MB'},
+    {time:'2026-04-07 16:20:33',user:'张工',component:'Boost@1.84.0',type:'制品',size:'128.5 MB'},
+  ],
+  verify:[
+    {time:'2026-04-08 11:05:44',user:'王审计',component:'OpenCV@4.9.0',result:'验签通过',file:'opencv-4.9.0.tar.gz'},
+    {time:'2026-04-07 15:22:10',user:'王审计',component:'未知组件',result:'签名不匹配',file:'unknown-lib.zip'},
+  ],
+  api:[
+    {time:'2026-04-08 11:20:15',caller:'软件所-组件数据接口',endpoint:'/api/v1/components/sync',method:'POST',status:200,duration:'234ms'},
+    {time:'2026-04-08 11:15:02',caller:'一所-可信评估接口',endpoint:'/api/v1/trust/score',method:'GET',status:200,duration:'1.2s'},
+    {time:'2026-04-08 10:55:31',caller:'软件所-漏洞情报接口',endpoint:'/api/v1/vulnerabilities',method:'GET',status:200,duration:'520ms'},
+    {time:'2026-04-08 10:30:18',caller:'一所-可信评估接口',endpoint:'/api/v1/trust/score',method:'GET',status:504,duration:'30s'},
+    {time:'2026-04-08 09:48:09',caller:'软件所-组件族谱接口',endpoint:'/api/v1/components/lineage',method:'GET',status:200,duration:'880ms'},
+  ]
+};
+
+// 待引入组件（来自用户需求 / 链平台登记）
+const pendingComponents = [
+  {id:'P001', name:'TensorRT-Plugin', version:'8.6.x', applicant:'张工', applicantTenant:'公网租户', source:'用户需求提交', applyTime:'2026-04-07 14:22:00', reason:'项目侧需要 NVIDIA TensorRT 自定义算子库用于推理加速', status:'待引入'},
+  {id:'P002', name:'PCL', version:'1.13.0', applicant:'陈工', applicantTenant:'航天科工', source:'用户需求提交', applyTime:'2026-04-05 10:08:00', reason:'点云处理库，用于激光雷达数据处理', status:'待引入'},
+  {id:'P003', name:'OpenSceneGraph', version:'3.6.5', applicant:'链平台-自动登记', applicantTenant:'-', source:'链平台',  applyTime:'2026-04-03 09:15:00', reason:'依赖发现：被 FreeCAD 间接引用', status:'待引入'},
+];
+
+// 已处理需求清单（确认引入 / 拒绝 的历史记录）
+const processedRequirements = [
+  {id:'P101', name:'spdlog', version:'1.13.0', applicant:'链平台-自动登记', applicantTenant:'-', source:'链平台', applyTime:'2026-03-28 09:30:00', processTime:'2026-03-29 10:15:00', processor:'李管理', result:'确认引入', remark:'依赖发现，被多个组件引用，确认引入并完成存储'},
+  {id:'P102', name:'CGAL', version:'5.6', applicant:'刘工', applicantTenant:'公网租户', source:'用户需求提交', applyTime:'2026-03-25 14:20:00', processTime:'2026-03-26 16:00:00', processor:'李管理', result:'拒绝', remark:'许可证不兼容（GPL-3），与项目商业使用场景冲突'},
+  {id:'P103', name:'PCL-Visualization', version:'1.12.1', applicant:'王工', applicantTenant:'中船重工', source:'用户需求提交', applyTime:'2026-03-22 09:30:00', processTime:'2026-03-23 11:00:00', processor:'李管理', result:'确认引入', remark:'已完成引入，已生成 SM2 签名'},
+  {id:'P104', name:'libsodium', version:'1.0.18', applicant:'赵工', applicantTenant:'航天科工', source:'用户需求提交', applyTime:'2026-03-18 10:00:00', processTime:'2026-03-19 14:30:00', processor:'李管理', result:'拒绝', remark:'已存在等效组件 OpenSSL，无需重复引入'},
+  {id:'P105', name:'eigen-tensor', version:'unsupported', applicant:'链平台-自动登记', applicantTenant:'-', source:'链平台', applyTime:'2026-03-15 08:20:00', processTime:'2026-03-15 16:45:00', processor:'李管理', result:'确认引入', remark:'已合并入 Eigen 主组件作为子模块管理'},
+];
+
+// Icons as SVG strings
+const icons = {
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  box:'<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+  shield:'<svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  key:'<svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+  file:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  users:'<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  userCheck:'<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  download:'<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  upload:'<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  activity:'<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+  code:'<svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+  package:'<svg viewBox="0 0 24 24"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+};
+
+function icon(name, cls='') { return `<span class="icon ${cls}">${icons[name]||''}</span>`; }
+
+// PAGE: Portal (不登录可访问)
+function pagePortal(){
+  const categories = [
+    {name:'MBSE', desc:'基于模型的系统工程', count:128},
+    {name:'CAD', desc:'计算机辅助设计', count:286},
+    {name:'CAE', desc:'计算机辅助工程仿真', count:215},
+    {name:'CAM', desc:'计算机辅助制造', count:172},
+    {name:'EDA', desc:'电子设计自动化', count:98},
+  ];
+  const features = [
+    {icon:'shield', title:'组件可信评估', desc:'对接底层可信安全扫描，从代码质量、安全漏洞、许可证合规等6个维度对组件进行综合评分，辅助用户做出可信选型决策。'},
+    {icon:'key', title:'国密签名验签', desc:'基于 SM2/SM3/SM4 国密算法，对组件文件进行签名与完整性校验，确保组件在分发与使用过程中来源可追溯、内容未被篡改。'},
+    {icon:'refresh', title:'生命周期管理', desc:'对组件从引入、存储、使用、更新到退出的全过程进行阶段化管理，支持自动识别与人工调整，覆盖组件治理全流程。'},
+    {icon:'package', title:'代码与制品仓', desc:'统一管理组件代码与多平台制品文件，支持多版本、多架构存储，并与组件唯一标识（PURL）精确绑定。'},
+    {icon:'activity', title:'风险情报展示', desc:'集中展示组件相关漏洞情报与风险事件，结合可信评分提供使用建议，提升组件使用过程中的安全可控性。'},
+    {icon:'settings', title:'多租户隔离', desc:'支持公网与多家私有云独立部署，租户级数据隔离与统一管理，满足不同单位的合规与安全要求。'},
+  ];
+  const advantages = [
+    {title:'供应链可追溯', desc:'统一组件标识与签名机制，从来源到使用全链路可追溯。'},
+    {title:'可信评估闭环', desc:'底层扫描评分 + 平台展示 + 用户决策，形成可信使用闭环。'},
+    {title:'信创环境适配', desc:'支持银河麒麟 ARM64 与 x86 双架构，对接达梦数据库等国产化基础软件。'},
+    {title:'多方协同建设', desc:'扫描方、数据方、平台方分工协作，组件数据持续更新与丰富。'},
+  ];
+  return `<div class="portal">
+    <div class="portal-header">
+      <div class="portal-logo">
+        <div class="logo-icon">可</div>
+        <div class="logo-text">可信开源代码仓<small>管理工具平台</small></div>
+      </div>
+      <div class="portal-nav">
+        <a onclick="document.getElementById('p-features').scrollIntoView({behavior:'smooth'})">平台特点</a>
+        <a onclick="document.getElementById('p-categories').scrollIntoView({behavior:'smooth'})">组件类别</a>
+        <a onclick="document.getElementById('p-advantages').scrollIntoView({behavior:'smooth'})">核心优势</a>
+        <a onclick="document.getElementById('p-stats').scrollIntoView({behavior:'smooth'})">平台数据</a>
+      </div>
+      <button class="btn btn-primary" onclick="currentModal='login';render();">立即使用</button>
+    </div>
+
+    <div class="portal-hero">
+      <div class="portal-hero-inner">
+        <h1>可信开源代码仓<br/>管理工具平台</h1>
+        <p>面向工业软件供应链场景，提供组件可信评估、签名验签、生命周期管理与统一选型能力，助力组件资源集中管理与安全可控使用。【此段为占位文案，待替换为正式内容】</p>
+        <div class="cta">
+          <button class="btn btn-primary" style="height:42px;padding:0 28px;font-size:15px;" onclick="currentModal='login';render();">${icons.search} 立即使用</button>
+          <button class="btn" style="height:42px;padding:0 28px;font-size:15px;">了解更多</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-section" id="p-features">
+      <div class="portal-section-inner">
+        <h2>平台核心能力</h2>
+        <div class="subtitle">围绕组件检索、可信验证、生命周期管理构建完整能力体系</div>
+        <div class="portal-grid-3">
+          ${features.map(f=>`<div class="portal-card">
+            <div class="icon-wrap">${icons[f.icon]}</div>
+            <h3>${f.title}</h3><p>${f.desc}</p>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-section alt" id="p-categories">
+      <div class="portal-section-inner">
+        <h2>收录组件类别</h2>
+        <div class="subtitle">覆盖工业软件五大核心领域，持续扩展中</div>
+        <div class="portal-grid-5">
+          ${categories.map(c=>`<div class="portal-cat">
+            <div class="cat-name">${c.name}</div>
+            <div class="cat-desc">${c.desc}</div>
+            <div class="cat-count">收录组件 ${c.count}+</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-section" id="p-advantages">
+      <div class="portal-section-inner">
+        <h2>核心优势</h2>
+        <div class="subtitle">为工业软件研发提供可信、可追溯、可控的组件使用环境</div>
+        <div class="portal-grid-4">
+          ${advantages.map(a=>`<div class="portal-card">
+            <h3 style="color:var(--primary-500)">${a.title}</h3><p>${a.desc}</p>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-section alt" id="p-stats">
+      <div class="portal-section-inner">
+        <h2>平台数据</h2>
+        <div class="subtitle">数据为占位示意，正式上线后实时更新</div>
+        <div class="portal-grid-4" style="margin-top:32px">
+          <div class="portal-stat"><div class="num">20,000+</div><div class="lbl">收录组件</div></div>
+          <div class="portal-stat"><div class="num">5</div><div class="lbl">工业软件领域</div></div>
+          <div class="portal-stat"><div class="num">10+</div><div class="lbl">主流开发语言</div></div>
+          <div class="portal-stat"><div class="num">9</div><div class="lbl">部署实例（公网+私有云）</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="portal-footer">
+      © 2026 北京奥思研工智能科技有限公司 · 工业软件可信开源代码仓管理工具
+    </div>
+
+    ${currentModal==='login'?renderLoginModal():''}
+  </div>`;
+}
+
+function renderLoginModal(){
+  return `<div class="modal-overlay" onclick="currentModal=null;render();">
+    <div class="modal login-modal" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <div class="login-title">登录平台</div>
+        <div class="login-sub">可信开源代码仓管理工具</div>
+        <div class="form-group"><label>账号</label><input class="input" placeholder="请输入账号" value="zhao"/></div>
+        <div class="form-group"><label>密码</label><input class="input" type="password" placeholder="请输入密码" value="******"/></div>
+        <button class="btn btn-primary" onclick="login()">登 录</button>
+        <div class="login-extra">
+          <a>忘记密码？</a>
+          <a>用户注册</a>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Navigation structure
+const navItems = [
+  {id:'search', label:'组件检索', icon:'search'},
+  {id:'shortlist', label:'选型清单管理', icon:'list'},
+  {group:'组件管理', items:[
+    {id:'comp-info', label:'组件信息管理', icon:'box'},
+    {id:'comp-lifecycle', label:'组件生命周期', icon:'refresh'},
+    {id:'comp-code', label:'代码管理', icon:'code'},
+    {id:'comp-artifact', label:'制品管理', icon:'package'},
+  ]},
+  {group:'安全可信', items:[
+    {id:'verify', label:'组件验签', icon:'shield'},
+  ]},
+  {group:'平台管理', items:[
+    {id:'tenant', label:'租户管理', icon:'settings'},
+    {id:'user', label:'用户管理', icon:'users'},
+    {id:'role', label:'角色管理', icon:'userCheck'},
+    {id:'license', label:'License管理', icon:'key'},
+    {id:'log', label:'日志统计', icon:'activity'},
+  ]},
+];
+
+function getBreadcrumb() {
+  const map = {
+    'portal':'门户首页',
+    'search':'组件检索','search-result':'组件检索 / 检索结果','detail':'组件检索 / 组件详情',
+    'version-detail':'组件检索 / 组件详情 / 版本详情',
+    'shortlist':'选型清单管理',
+    'my-downloads':'我的下载记录',
+    'comp-info':'组件管理 / 组件信息管理','comp-lifecycle':'组件管理 / 组件生命周期',
+    'comp-code':'组件管理 / 代码管理','comp-artifact':'组件管理 / 制品管理',
+    'verify':'安全可信 / 组件验签',
+    'tenant':'平台管理 / 租户管理','user':'平台管理 / 用户管理','role':'平台管理 / 角色管理',
+    'license':'平台管理 / License管理','log':'平台管理 / 日志统计',
+  };
+  return map[currentPage] || '首页';
+}
+
+function getActiveNav() {
+  if(currentPage==='detail'||currentPage==='search-result'||currentPage==='version-detail') return 'search';
+  if(currentPage==='my-downloads') return 'my-downloads';
+  return currentPage;
+}
+
+function navigate(page) {
+  // 未登录情况下，除门户页和登录页外，跳转都强制弹出登录
+  if(!currentUser && page !== 'portal') {
+    currentModal = 'login';
+    render();
+    return;
+  }
+  currentPage = page;
+  currentModal = null;
+  currentDrawer = null;
+  render();
+}
+
+function login(){
+  currentUser = {name:'赵平台', role:'平台管理员', tenant:'公网租户'};
+  currentModal = null;
+  currentPage = 'search'; // 登录后默认进入组件检索
+  render();
+}
+
+function logout(){
+  currentUser = null;
+  currentPage = 'portal';
+  currentModal = null;
+  currentDrawer = null;
+  render();
+}
+
+// Render functions
+function renderSidebar() {
+  const active = getActiveNav();
+  let html = `<div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">可</div>
+      <div class="logo-text">可信开源代码仓<small>管理工具平台</small></div>
+    </div>
+    <div class="sidebar-nav">`;
+  
+  navItems.forEach(item => {
+    if(item.group) {
+      html += `<div class="nav-group"><div class="nav-group-title">${item.group}</div>`;
+      item.items.forEach(sub => {
+        html += `<button class="nav-item ${active===sub.id?'active':''}" onclick="navigate('${sub.id}')">${icons[sub.icon]}<span>${sub.label}</span></button>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<button class="nav-item ${active===item.id?'active':''}" onclick="navigate('${item.id}')">${icons[item.icon]}<span>${item.label}</span></button>`;
+    }
+  });
+  
+  html += `</div></div>`;
+  return html;
+}
+
+function renderHeader() {
+  const alerts = getAlerts();
+  const bellIcon = `<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+  return `<div class="header">
+    <div class="header-left"><div class="breadcrumb">${getBreadcrumb()}</div></div>
+    <div class="header-right">
+      <span class="text-sm text-muted">${currentUser?currentUser.tenant:'公网租户'}</span>
+      <button class="bell-btn" onclick="currentDrawer='alerts';render();" title="风险预警">
+        ${bellIcon}
+        ${alerts.length>0?`<span class="bell-badge">${alerts.length}</span>`:''}
+      </button>
+      <div class="avatar" onclick="currentDrawer='userMenu';render();" style="cursor:pointer">${currentUser?currentUser.name.charAt(0):'游'}</div>
+    </div>
+    ${currentDrawer==='userMenu'?renderUserMenu():''}
+    ${currentDrawer==='alerts'?renderAlertsDrawer():''}
+  </div>`;
+}
+
+function renderUserMenu(){
+  return `<div style="position:fixed;inset:0;z-index:200" onclick="currentDrawer=null;render();">
+    <div style="position:absolute;top:50px;right:24px;background:#fff;border:1px solid var(--border-subtle);border-radius:var(--radius);box-shadow:var(--shadow-md);min-width:180px;padding:8px 0;" onclick="event.stopPropagation()">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border-subtle)">
+        <div style="font-weight:600;font-size:13px">${currentUser?currentUser.name:''}</div>
+        <div style="font-size:11px;color:var(--text-tertiary)">${currentUser?currentUser.role:''}</div>
+      </div>
+      <button class="nav-item" style="padding:8px 16px" onclick="logout()">退出登录</button>
+    </div>
+  </div>`;
+}
+
+function renderAlertsDrawer() {
+  const alerts = getAlerts();
+  const downloadAlerts = alerts.filter(a => a.source==='download');
+  const shortlistAlerts = alerts.filter(a => a.source==='shortlist');
+  const levelTag = v => v.level==='高'
+    ? `<span class="tag tag-red">${v.level}危</span>`
+    : v.level==='中'
+      ? `<span class="tag tag-orange">${v.level}危</span>`
+      : `<span class="tag tag-blue">${v.level}危</span>`;
+  const warnIcon = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
+  const renderSection = (title, items, emptyText, footerLink) => {
+    const rows = items.map(a => `
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-weight:600;font-size:13px">${a.component}</span>
+          <span style="font-size:12px;color:var(--text-tertiary)">@${a.version}</span>
+          ${levelTag(a.vuln)}
+          ${a.vuln.poc==='已发布'?'<span class="tag tag-red" style="font-size:11px">PoC已发布</span>':''}
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary)">${a.vuln.id} · ${a.vuln.desc}</div>
+        <div style="font-size:11px;color:var(--text-tertiary)">发现时间 ${a.vuln.foundTime}${a.source==='download'?` · ${a.user} 于 ${a.time.slice(0,10)} 下载`:` · ${a.listName}`}</div>
+      </div>`).join('');
+    return `
+      <div style="padding:10px 16px;background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);font-size:12px;font-weight:600;color:var(--text-secondary)">${title}</div>
+      ${items.length===0
+        ? `<div class="empty" style="padding:20px 16px;font-size:13px">${emptyText}</div>`
+        : rows}
+      ${footerLink ? `<div style="padding:10px 16px;border-bottom:1px solid var(--border-subtle)">${footerLink}</div>` : ''}`;
+  };
+
+  return `<div style="position:fixed;inset:0;z-index:300" onclick="currentDrawer=null;render();">
+    <div style="position:absolute;top:0;right:0;bottom:0;width:400px;background:#fff;box-shadow:var(--shadow-xl);display:flex;flex-direction:column;" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;min-height:60px;border-bottom:1px solid var(--border-subtle);">
+        <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;">
+          <span style="color:var(--error)">${warnIcon}</span>
+          风险预警
+          ${alerts.length>0?`<span class="bell-badge" style="position:static;min-width:20px;height:20px;font-size:11px;line-height:20px">${alerts.length}</span>`:''}
+        </div>
+        <button class="close-btn" onclick="currentDrawer=null;render();">&times;</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;">
+        ${renderSection(`下载记录预警 (${downloadAlerts.length})`, downloadAlerts, '您下载的组件暂无新漏洞预警',
+          `<a style="font-size:13px;color:var(--primary-500);cursor:pointer;font-weight:500" onclick="currentDrawer=null;navigate('my-downloads');">查看我的下载记录 &rarr;</a>`)}
+        ${renderSection(`选型清单预警 (${shortlistAlerts.length})`, shortlistAlerts, '选型清单中的组件暂无新漏洞预警',
+          `<a style="font-size:13px;color:var(--primary-500);cursor:pointer;font-weight:500" onclick="currentDrawer=null;navigate('shortlist');">前往选型清单管理 &rarr;</a>`)}
+      </div>
+    </div>
+  </div>`;
+}
+
+// 组件检索首页：分类（待软件所提供，先mock）
+const componentCategories = [
+  {key:'all', label:'全部组件', icon:'box', count:1286, hot:false},
+  {key:'mbse', label:'MBSE 建模', icon:'package', count:128, hot:true},
+  {key:'cad', label:'CAD 建模', icon:'package', count:286, hot:false},
+  {key:'cae', label:'CAE 仿真', icon:'activity', count:215, hot:true},
+  {key:'cam', label:'CAM 制造', icon:'settings', count:172, hot:false},
+  {key:'eda', label:'EDA 电子设计', icon:'code', count:98, hot:false},
+  {key:'base', label:'基础库', icon:'box', count:312, hot:false},
+  {key:'math', label:'数学/数值计算', icon:'activity', count:86, hot:false},
+  {key:'image', label:'图像/视觉处理', icon:'package', count:72, hot:false},
+  {key:'robot', label:'机器人/控制', icon:'refresh', count:64, hot:false},
+  {key:'gui', label:'GUI/界面框架', icon:'box', count:58, hot:false},
+  {key:'db', label:'数据库相关', icon:'package', count:120, hot:false},
+  {key:'network', label:'网络通信', icon:'activity', count:96, hot:false},
+  {key:'security', label:'加密/安全', icon:'shield', count:74, hot:false},
+  {key:'parallel', label:'并行/高性能计算', icon:'activity', count:52, hot:false},
+  {key:'serialize', label:'序列化/数据格式', icon:'file', count:48, hot:false},
+  {key:'test', label:'测试框架', icon:'userCheck', count:38, hot:false},
+  {key:'log', label:'日志/监控', icon:'activity', count:42, hot:false},
+  {key:'toolchain', label:'工具链/编译', icon:'code', count:55, hot:false},
+  {key:'embedded', label:'嵌入式/实时系统', icon:'box', count:46, hot:false},
+];
+
+const hotKeywords = ['图像处理','线性代数','GUI 框架','CAD 内核','Modbus','OpenCV','ROS','protobuf'];
+
+// PAGE: Search
+function pageSearch() {
+  const cat = window.currentCategory || 'all';
+  // mock：根据分类筛选（占位实现，目前都展示全部）
+  const list = components;
+  const hotList = [...components].sort((a,b)=>b.downloads-a.downloads).slice(0,5);
+
+  return `<div class="content" style="padding:0">
+    <div class="search-hero" style="margin:20px 24px 0;border-radius:var(--radius);">
+      <h1>可信开源组件检索</h1>
+      <p>检索平台内组件，查看组件信息、可信评估与风险情报</p>
+      <div class="search-box">
+        <input class="input" placeholder="输入组件名称、PURL标识、标签或描述关键词..." />
+        <button class="btn btn-primary" onclick="navigate('search-result')">${icons.search} 检索</button>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--text-secondary);">
+        <span>热搜：</span>
+        ${hotKeywords.map(k=>`<a style="color:var(--primary-500);margin:0 8px;cursor:pointer" onclick="navigate('search-result')">${k}</a>`).join('')}
+      </div>
+    </div>
+
+    <div class="search-layout">
+      <!-- 左：分类 -->
+      <aside class="cat-pane">
+        <div class="cat-pane-title">组件分类</div>
+        <div class="cat-list">
+          ${componentCategories.map(c=>`<div class="cat-item ${cat===c.key?'active':''}" onclick="window.currentCategory='${c.key}';render();">
+            <span class="cat-icon">${icons[c.icon]||icons.box}</span>
+            <span class="cat-label">${c.label}</span>
+            ${c.hot?'<span class="cat-hot">HOT</span>':''}
+            <span class="cat-count">${c.count}</span>
+          </div>`).join('')}
+        </div>
+        <div class="cat-pane-foot">分类数据后续由软件所提供，目前为示意 mock</div>
+      </aside>
+
+      <!-- 中：推荐 -->
+      <main class="main-pane">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title flex-between">
+            <span>${componentCategories.find(c=>c.key===cat)?.label||'全部组件'} · 推荐</span>
+            <a class="text-sm" style="color:var(--primary-500);cursor:pointer" onclick="navigate('search-result')">更多 &rarr;</a>
+          </div>
+          ${list.map(c => renderCompCard(c)).join('')}
+        </div>
+      </main>
+
+      <!-- 右：热门 -->
+      <aside class="side-pane">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:12px">热门组件</div>
+          ${hotList.map((c,i)=>`<div class="hot-row" onclick="navigate('detail')">
+            <div class="hot-rank ${i<3?'top':''}">${i+1}</div>
+            <div style="min-width:0">
+              <div class="hot-name">${c.name}</div>
+              <div class="hot-desc">下载量 ${c.downloads.toLocaleString()}</div>
+            </div>
+            <div class="hot-score" style="color:${c.score>=90?'var(--success)':c.score>=80?'var(--warning)':'var(--error)'}">
+              <span class="hs-val">${c.score}</span>
+              <span class="hs-label">可信评分</span>
+            </div>
+          </div>`).join('')}
+        </div>
+      </aside>
+    </div>
+  </div>`;
+}
+
+function renderCompCard(c) {
+  const scoreClass = c.score>=90?'':(c.score>=80?'warn':'danger');
+  return `<div class="comp-card" onclick="navigate('detail')">
+    <div class="comp-card-left">
+      <div>
+        <div class="comp-card-header">
+          <div>
+            <div class="comp-card-name">${c.name}</div>
+            <div class="comp-card-purl">${c.purl}</div>
+          </div>
+          <div class="comp-card-tags">${c.tags.map(t=>`<span class="tag tag-blue" style="font-size:11px">${t}</span>`).join('')}</div>
+        </div>
+        <div class="comp-card-desc">${c.desc}</div>
+      </div>
+      <div class="comp-card-meta">
+        <span>下载量 ${c.downloads.toLocaleString()}</span>
+        <span>更新时间 ${c.updated}</span>
+        <span>分类: ${c.category}</span>
+      </div>
+    </div>
+    <div class="comp-card-right">
+      <div class="trust-score ${scoreClass}" style="flex-direction:column;align-items:center;padding:12px 14px;min-width:90px;border-radius:8px;gap:2px">
+        <div class="ts-label" style="font-size:10px">可信评分</div>
+        <div class="ts-val" style="color:${c.score>=90?'var(--success)':c.score>=80?'var(--warning)':'var(--error)'};font-size:26px;line-height:1;margin:2px 0">${c.score}</div>
+        <div style="font-size:10px;color:var(--text-tertiary)">${c.score>=90?'优秀':c.score>=80?'良好':'一般'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Search Result
+function pageSearchResult() {
+  const sorted = [...components];
+  if(searchSort==='downloads') sorted.sort((a,b)=>b.downloads-a.downloads);
+  else if(searchSort==='updated') sorted.sort((a,b)=>b.updated.localeCompare(a.updated));
+  else if(searchSort==='score') sorted.sort((a,b)=>b.score-a.score);
+  return `<div class="content">
+    <div class="flex-between mb-16">
+      <div class="search-box" style="max-width:480px">
+        <input class="input" value="OpenCV" />
+        <button class="btn btn-primary">${icons.search} 检索</button>
+      </div>
+      <button class="btn" onclick="currentModal='requestComp';render();">${icons.plus} 没找到组件？提交需求</button>
+    </div>
+    <div class="sort-bar">
+      <span>排序方式：</span>
+      <a class="${searchSort==='relevance'?'active':''}" onclick="searchSort='relevance';render();">相关度</a>
+      <a class="${searchSort==='downloads'?'active':''}" onclick="searchSort='downloads';render();">按下载次数</a>
+      <a class="${searchSort==='updated'?'active':''}" onclick="searchSort='updated';render();">按更新时间</a>
+      <a class="${searchSort==='score'?'active':''}" onclick="searchSort='score';render();">按可信评分</a>
+      <span class="text-muted" style="margin-left:auto;">共找到 ${sorted.length} 个组件</span>
+    </div>
+    ${sorted.map(c => renderCompCard(c)).join('')}
+    <div class="pagination">
+      <span>共 ${sorted.length} 条</span>
+      <div class="pagination-btns">
+        <button>&lt;</button><button class="active">1</button><button>&gt;</button>
+      </div>
+    </div>
+    ${currentModal==='requestComp'?renderRequestCompModal():''}
+  </div>`;
+}
+
+function renderRequestCompModal(){
+  return `<div class="modal-overlay" onclick="currentModal=null;render();">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">提交组件引入需求<button class="close-btn" onclick="currentModal=null;render();">&times;</button></div>
+      <div class="modal-body">
+        <div class="text-sm text-muted mb-16">未在平台检索到所需组件？请填写以下信息，平台将登记到「组件生命周期管理 - 待引入」清单，由组件管理员后续处理。</div>
+        <div class="form-row">
+          <div class="form-group"><label class="required">组件名称</label><input class="input" placeholder="如 PCL"/></div>
+          <div class="form-group"><label class="required">期望版本</label><input class="input" placeholder="如 1.13.0 或 latest"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>组件来源 / 主页</label><input class="input" placeholder="如 https://github.com/xxx"/></div>
+          <div class="form-group"><label>许可证</label><input class="input" placeholder="如 BSD-3-Clause"/></div>
+        </div>
+        <div class="form-group"><label class="required">使用场景与需求说明</label><textarea class="input" placeholder="请说明该组件的用途、紧迫程度等"></textarea></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="currentModal=null;render();">取消</button>
+        <button class="btn btn-primary" onclick="alert('需求已提交，已登记到组件生命周期 - 待引入');currentModal=null;render();">提交需求</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Detail (组件总览 + 版本列表)
+function pageDetail() {
+  const c = components[0];
+  const versions = componentVersions[c.name] || [];
+  return `<div class="content">
+    <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="navigate('search-result')">&larr; 返回检索结果</button></div>
+    <div class="detail-header">
+      <div class="flex-between">
+        <div style="flex:1">
+          <h2>${c.name} <span class="tag tag-green" style="font-size:12px;vertical-align:middle">${c.status}</span></h2>
+          <div class="purl">${c.purl}</div>
+          <div class="desc">${c.desc}</div>
+          <div class="info-grid" style="margin-top:16px;grid-template-columns:repeat(4,1fr);gap:12px;">
+            <div class="info-item"><span class="info-label">分类</span><span class="info-value">${c.category}</span></div>
+            <div class="info-item"><span class="info-label">许可证</span><span class="info-value">MIT License</span></div>
+            <div class="info-item"><span class="info-label">最新版本</span><span class="info-value">${versions[0]?versions[0].version:'-'}</span></div>
+            <div class="info-item"><span class="info-label">总下载量</span><span class="info-value">${c.downloads.toLocaleString()}</span></div>
+          </div>
+        </div>
+        <div class="trust-score" style="flex-direction:column;align-items:center;padding:16px 24px;min-width:130px;border-radius:10px;margin-left:24px">
+          <div class="ts-label">综合可信评分</div>
+          <div class="ts-val" style="color:var(--success);font-size:36px;margin:6px 0;">${c.score}</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">基于最新版本</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title flex-between"><span>版本列表</span><span class="text-sm text-muted" style="font-weight:400">共 ${versions.length} 个版本，点击版本进入版本详情</span></div>
+      ${versions.map(v=>{
+        const sc = v.score>=90?'var(--success)':v.score>=80?'var(--primary-500)':'var(--warning)';
+        return `<div class="version-row" onclick="currentVersion='${v.version}';versionDetailTab='code';navigate('version-detail');">
+          <div style="display:flex;align-items:center;gap:16px">
+            <div>
+              <div class="v-num">${v.version} ${v.isLatest?'<span class="tag tag-blue" style="margin-left:6px">最新</span>':''}</div>
+              <div class="v-meta">发布时间 ${v.released} · 下载 ${v.downloads.toLocaleString()} · ${v.changelog}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px">
+            <div style="text-align:right">
+              <div class="trust-score ${v.score>=90?'':(v.score>=80?'warn':'danger')}" style="padding:6px 14px;">
+                <span class="ts-label">可信评分</span>
+                <span class="ts-val" style="color:${sc};font-size:20px;">${v.score}</span>
+              </div>
+            </div>
+            <span class="text-sm text-muted">查看详情 &rarr;</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${currentModal==='addToList'?renderAddToListModal():''}
+  </div>`;
+}
+
+// PAGE: Version Detail (版本详情：7个tab)
+function pageVersionDetail(){
+  const c = components[0];
+  const versions = componentVersions[c.name] || [];
+  const v = versions.find(x=>x.version===currentVersion) || versions[0];
+  const tabs = [
+    {id:'code',label:'代码'},
+    {id:'artifact',label:'制品'},
+    {id:'trust',label:'可信评估'},
+    {id:'risk',label:'风险与缺陷'},
+    {id:'similar',label:'相似组件'},
+    {id:'license-info',label:'许可证'},
+    {id:'tree',label:'组件图谱'},
+  ];
+
+  let tabContent = '';
+  if(versionDetailTab==='code'){
+    // 复用 Gitee 代码仓库形态（含左侧导航）
+    const files = [
+      {name:'README.md', msg:'Initial commit', time:`${v.released}`, icon:'file'},
+      {name:'CMakeLists.txt', msg:`build: ${v.changelog}`, time:`${v.released}`, icon:'code'},
+      {name:`${c.name.toLowerCase()}-${v.version}-src.tar.gz`, msg:`增加文件: ${c.name.toLowerCase()}-${v.version}-src.tar.gz`, time:`${v.released}`, icon:'package'},
+    ];
+    tabContent = `<div style="margin:-16px -20px;padding:16px;background:var(--bg-surface)">
+      <div class="gitee-layout">
+        <aside class="gitee-side" style="position:static;">
+          <div class="gitee-side-item active">${icons.code} <span>代码</span></div>
+          <div class="gitee-side-item">${icons.upload} <span>提交</span><span class="badge">5</span></div>
+          <div class="gitee-side-item">${icons.refresh} <span>分支</span><span class="badge">${versions.length}</span></div>
+          <div class="gitee-side-item">${icons.list} <span>Pull requests</span><span class="badge">0</span></div>
+          <div class="gitee-side-item">${icons.shield} <span>Issues</span><span class="badge">0</span></div>
+          <div class="gitee-side-item">${icons.box} <span>版本</span></div>
+          <div class="gitee-side-item">${icons.activity} <span>统计</span></div>
+          <div class="gitee-side-item">${icons.clock} <span>动态</span></div>
+          <div class="gitee-side-item">${icons.users} <span>成员</span></div>
+        </aside>
+        <div class="gitee-main">
+          <div class="gitee-branch-bar">
+            <div class="gitee-branch-left">
+              <button class="gitee-branch-pill">⑂ v${v.version} ▾</button>
+              <span class="text-muted">⑂ 分支 ${versions.length}</span>
+              <span class="text-muted">⌖ 标签 ${versions.length}</span>
+            </div>
+            <div class="gap-8">
+              <button class="btn btn-sm">${icons.search}</button>
+              <button class="btn btn-sm">${icons.plus}</button>
+              <button class="btn btn-primary btn-sm">克隆/下载 ▾</button>
+            </div>
+          </div>
+          <div class="gitee-commit-bar">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="avatar" style="width:24px;height:24px;font-size:11px">陈</div>
+              <span><b>陈俊宏</b> ${v.changelog}</span>
+            </div>
+            <div class="gap-8 text-muted text-sm">
+              <span>a3c5e8f1</span><span>${v.released}</span><span>5次提交</span>
+            </div>
+          </div>
+          <div class="gitee-file-list">
+            ${files.map(f=>`<div class="gitee-file-row">
+              <div class="gitee-file-icon">${icons[f.icon]}</div>
+              <div class="gitee-file-name">${f.name}</div>
+              <div class="gitee-file-msg">${f.msg}</div>
+              <div class="gitee-file-time">${f.time}</div>
+            </div>`).join('')}
+          </div>
+          <div class="gitee-readme">
+            <div class="gitee-readme-cards">
+              <div class="gitee-readme-card active">
+                <div class="rc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                <div class="rc-label">README</div>
+              </div>
+              <div class="gitee-readme-card">
+                <div class="rc-icon"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+                <div class="rc-label">无许可证信息</div>
+              </div>
+            </div>
+            <div class="gitee-readme-body">
+              <div class="gitee-readme-toc">
+                <a class="active">· 代码库说明</a>
+                <a>· 介绍</a>
+                <a>· 软件架构</a>
+                <a>· 安装教程</a>
+                <a>· 使用说明</a>
+              </div>
+              <div class="gitee-readme-content">
+                <h3>代码库说明</h3>
+                <h4>介绍</h4>
+                <p>${c.name} ${v.version} 版本的源码仓库，包含构建脚本、文档与核心实现。变更说明：${v.changelog}</p>
+                <h4>软件架构</h4>
+                <p>软件架构说明</p>
+                <h4>安装教程</h4>
+                <p>xxxx xxxx xxxx</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else if(versionDetailTab==='artifact'){
+    // 复用 Gitee 制品仓库形态（含左侧仓库树）
+    const arts = [
+      {file:`${c.name.toLowerCase()}-${v.version}-linux-x64.tar.gz`, platform:'Linux x64', size:'56.2 MB', signed:true},
+      {file:`${c.name.toLowerCase()}-${v.version}-linux-arm64.tar.gz`, platform:'Linux ARM64（麒麟）', size:'48.7 MB', signed:true},
+      {file:`${c.name.toLowerCase()}-${v.version}-windows-x64.zip`, platform:'Windows x64', size:'62.1 MB', signed:true},
+    ];
+    const childRepos = [
+      {name:`${c.name.toLowerCase()}-${v.version}-src`, active:false},
+      {name:`${c.name.toLowerCase()}-${v.version}-vr`, active:true},
+      {name:`${c.name.toLowerCase()}-${v.version}-re2`, active:false},
+    ];
+    tabContent = `<div style="margin:-16px -20px;padding:16px;background:var(--bg-surface)">
+      <div class="gitee-art-layout">
+        <div class="gitee-art-list">
+          ${childRepos.map(r=>`<div class="gitee-art-item ${r.active?'active':''}">
+            <span class="arrow">▸</span>
+            <span class="ico">${icons.package}</span>
+            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</span>
+          </div>`).join('')}
+        </div>
+        <div class="gitee-art-detail">
+          <div class="gitee-art-detail-head">
+            <h3>${icons.package} ${c.name.toLowerCase()}-${v.version}-vr <span style="font-weight:400;font-size:12px;color:var(--text-tertiary)">[${c.name.toLowerCase()}-${v.version}-vr]</span></h3>
+            <div class="actions"><span>${icons.download}</span><span>${icons.refresh}</span><span>⋯</span></div>
+          </div>
+          <div class="gitee-art-detail-tabs">
+            <div class="gitee-art-detail-tab active">基础信息</div>
+            <div class="gitee-art-detail-tab">制品文件</div>
+          </div>
+          <div class="gitee-art-info">
+            <div class="gitee-art-info-row"><div class="lbl">仓库标识：</div><div class="val">${c.name.toLowerCase()}-${v.version}-vr <span class="copy-icon">⎘</span></div></div>
+            <div class="gitee-art-info-row"><div class="lbl">包类型：</div><div class="val"><span style="color:var(--error);font-weight:600">▣</span> Generic</div></div>
+            <div class="gitee-art-info-row"><div class="lbl">发布信息：</div><div class="val"><div class="avatar" style="width:20px;height:20px;font-size:10px">陈</div> 陈俊宏 于 ${v.released} 发布</div></div>
+            <div class="gitee-art-info-row"><div class="lbl">SM2签名：</div><div class="val"><span class="tag tag-green">已签名 · SM2+SM3</span></div></div>
+            <div class="gitee-art-info-row"><div class="lbl">制品数量：</div><div class="val">${arts.length} 个</div></div>
+          </div>
+          <div style="padding:0 20px 20px">
+            <div class="gitee-art-relate-title">▎制品文件列表</div>
+            <table class="table" style="margin:0">
+              <thead><tr><th>文件</th><th>平台</th><th>大小</th><th>SM2签名</th><th style="width:160px">操作</th></tr></thead>
+              <tbody>${arts.map(a=>`<tr>
+                <td style="display:flex;align-items:center;gap:8px"><span style="color:var(--text-tertiary)">${icons.package}</span><b>${a.file}</b></td>
+                <td>${a.platform}</td>
+                <td>${a.size}</td>
+                <td><span class="tag ${a.signed?'tag-green':'tag-gray'}">${a.signed?'已签名':'未签名'}</span></td>
+                <td class="gap-8"><button class="btn btn-sm">${icons.download} 下载</button><button class="btn btn-sm">详情</button></td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else if(versionDetailTab==='trust'){
+    const scores = versionTrustScores[v.version] || versionTrustScores['4.9.0'];
+    tabContent = `<div class="flex-between mb-16"><b>可信评估 · ${v.version}</b><span class="text-sm text-muted">数据由底层可信扫描工具提供</span></div>
+      <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;">
+        <div class="trust-score" style="flex-direction:column;align-items:center;padding:24px;border-radius:10px;height:fit-content;">
+          <div class="ts-label">本版本综合评分</div>
+          <div class="ts-val" style="color:var(--success);font-size:42px;margin:6px 0;">${v.score}</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">${v.score>=90?'优秀':v.score>=80?'良好':'一般'}</div>
+        </div>
+        <div>
+          <div class="text-sm text-muted mb-16">可信评估包含以下 6 个维度。本版本各维度得分如下：</div>
+          ${trustDimensions.map(d=>{
+            const val = scores[d.key];
+            const color = val>=90?'var(--success)':val>=80?'var(--primary-500)':'var(--warning)';
+            return `<div class="dim-card">
+              <div class="dim-card-head">
+                <div class="dim-card-title">${d.label}</div>
+                <div class="score-label" style="color:${color};font-size:16px;">${val}</div>
+              </div>
+              <div class="dim-card-desc">${d.desc}</div>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:${val}%;background:${color}"></div></div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="margin-top:16px;text-align:right;font-size:12px;color:var(--text-tertiary)">最近评估时间：2026-03-20 14:30:00</div>`;
+  } else if(versionDetailTab==='risk'){
+    const vulnList = getVulns(c.name, v.version);
+    // 修复建议解析
+    function parseFixVersion(fixStr) {
+      const m = fixStr.match(/升级到\s+([\d.]+)/);
+      return m ? m[1] : null;
+    }
+    tabContent = `
+      <div class="flex-between mb-16"><b>风险与缺陷 · ${v.version}</b><span class="text-sm text-muted">本视图仅展示对当前版本生效的风险</span></div>
+      <div style="overflow-x:auto">
+      <table class="table"><thead><tr><th>漏洞编号</th><th>等级</th><th>描述</th><th>漏洞分类</th><th>披露时间</th><th>修复措施</th><th>补丁发布</th><th>PoC</th><th>参考链接</th><th>修复操作</th></tr></thead>
+      <tbody>
+        ${vulnList.length===0?'<tr><td colspan="10" class="empty">当前版本未发现已知漏洞</td></tr>':vulnList.map(vv=>{
+          const suggestVer = parseFixVersion(vv.fix);
+          const fixBtn = suggestVer ? `<button class="btn btn-sm btn-primary" onclick="currentVersion='${suggestVer}';versionDetailTab='code';render();">查看 v${suggestVer}</button>` : '<span class="text-sm text-muted">-</span>';
+          return `<tr>
+            <td><b>${vv.id}</b></td>
+            <td><span class="tag ${vv.level==='高'?'tag-red':vv.level==='中'?'tag-orange':'tag-blue'}">${vv.level}</span></td>
+            <td class="cell-wrap">${vv.desc}</td>
+            <td><span class="tag tag-gray">${vv.cwe}</span></td>
+            <td>${vv.disclose}</td>
+            <td>${vv.fix}</td>
+            <td><span class="tag ${vv.patch==='已发布'?'tag-green':'tag-orange'}">${vv.patch}</span></td>
+            <td><span class="tag ${vv.poc==='已发布'?'tag-red':'tag-gray'}">${vv.poc}</span></td>
+            <td>${vv.refs.map(r=>`<a href="${r}" target="_blank" style="color:var(--primary-500);font-size:12px;text-decoration:none">NVD 详情 &nearr;</a>`).join('<br/>')}</td>
+            <td class="cell-actions gap-8">${fixBtn}</td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>
+      </div>`;
+  } else if(versionDetailTab==='similar'){
+    tabContent = `<div class="mb-16 text-sm text-muted">基于标签和分类匹配的相似组件推荐（基于版本 ${v.version} 的依赖与功能特征）</div>
+      ${[components[1],components[2]].map(c => renderCompCard(c)).join('')}`;
+  } else if(versionDetailTab==='license-info'){
+    tabContent = `<div class="flex-between mb-16"><b>许可证信息 · ${v.version}</b></div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-label">许可证名称</span><span class="info-value">MIT License</span></div>
+        <div class="info-item"><span class="info-label">SPDX标识</span><span class="info-value">MIT</span></div>
+        <div class="info-item"><span class="info-label">兼容性</span><span class="info-value"><span class="tag tag-green">宽松许可</span></span></div>
+      </div>
+      <div style="margin-top:16px;padding:16px;background:var(--bg-surface);border-radius:var(--radius);font-size:12px;font-family:monospace;color:var(--text-secondary);white-space:pre-wrap;">MIT License\n\nCopyright (c) 2024 ${c.name} team\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software...</div>`;
+  } else if(versionDetailTab==='tree'){
+    // 节点：当前组件 + 上下游依赖 + 相似组件 + 仓库节点
+    // 关系：DEPEND（已明确依赖）/ SIMILAR（相似）/ STORED_AT（存储在仓库）
+    const nodes = [
+      // 当前组件（核心）
+      {id:'self', label:c.name+'@'+v.version, type:'self', x:480, y:240},
+      // 依赖（被当前组件依赖）
+      {id:'d1', label:'zlib', type:'software', x:200, y:120},
+      {id:'d2', label:'libjpeg', type:'software', x:200, y:240},
+      {id:'d3', label:'libpng', type:'software', x:200, y:360},
+      {id:'d4', label:'protobuf', type:'software', x:340, y:80},
+      {id:'d5', label:'tbb', type:'software', x:340, y:400},
+      // 上游使用方
+      {id:'u1', label:'FreeCAD', type:'software', x:760, y:120},
+      {id:'u2', label:'PCL', type:'software', x:760, y:240},
+      {id:'u3', label:'ROS-vision', type:'software', x:760, y:360},
+      // 相似组件
+      {id:'s1', label:'Pillow', type:'similar', x:480, y:60},
+      {id:'s2', label:'Scikit-Image', type:'similar', x:480, y:420},
+      // 仓库
+      {id:'r1', label:'opencv-vr', type:'repo', x:900, y:200},
+      {id:'r2', label:'opencv-src', type:'repo', x:900, y:320},
+    ];
+    const edges = [
+      // self 依赖
+      {from:'self', to:'d1', type:'DEPEND'},
+      {from:'self', to:'d2', type:'DEPEND'},
+      {from:'self', to:'d3', type:'DEPEND'},
+      {from:'self', to:'d4', type:'DEPEND'},
+      {from:'self', to:'d5', type:'DEPEND'},
+      // 上游依赖 self
+      {from:'u1', to:'self', type:'DEPEND'},
+      {from:'u2', to:'self', type:'DEPEND'},
+      {from:'u3', to:'self', type:'DEPEND'},
+      // 相似关系
+      {from:'self', to:'s1', type:'SIMILAR'},
+      {from:'self', to:'s2', type:'SIMILAR'},
+      // 存储
+      {from:'self', to:'r1', type:'STORED_AT'},
+      {from:'self', to:'r2', type:'STORED_AT'},
+    ];
+    const colorOf = (t)=>({self:'#1F70CE', software:'#c990c0', similar:'#7c8def', repo:'#f9c6c9'})[t]||'#9aa0a6';
+    const radiusOf = (t)=>t==='self'?34:22;
+    const nodeMap = Object.fromEntries(nodes.map(n=>[n.id,n]));
+
+    // 计算边的端点（避免和圆心重合，朝圆边偏移）
+    const edgeGeom = (e)=>{
+      const a=nodeMap[e.from], b=nodeMap[e.to];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const len=Math.sqrt(dx*dx+dy*dy)||1;
+      const ra=radiusOf(a.type), rb=radiusOf(b.type);
+      return {
+        x1:a.x+dx/len*ra, y1:a.y+dy/len*ra,
+        x2:b.x-dx/len*rb, y2:b.y-dy/len*rb,
+        mx:(a.x+b.x)/2, my:(a.y+b.y)/2,
+      };
+    };
+
+    const counts = {self:1, software:nodes.filter(n=>n.type==='software').length, similar:nodes.filter(n=>n.type==='similar').length, repo:nodes.filter(n=>n.type==='repo').length};
+    const relCounts = edges.reduce((m,e)=>{m[e.type]=(m[e.type]||0)+1;return m;},{});
+
+    tabContent = `<div class="flex-between mb-16"><b>组件图谱 · ${v.version}</b><span class="text-sm text-muted">展示当前版本的依赖、相似组件及存储仓库关系</span></div>
+      <div class="graph-container">
+        <div class="graph-canvas">
+          <svg viewBox="0 0 1000 480" style="width:100%;height:100%;">
+            <defs>
+              <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#bdbdbd"/></marker>
+              <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1F70CE"/></marker>
+            </defs>
+            ${edges.map(e=>{
+              const g=edgeGeom(e);
+              const cls = e.type==='SIMILAR'?'similar':'';
+              const marker = e.type==='SIMILAR'?'url(#arrow-blue)':'url(#arrow-gray)';
+              const label = e.type==='DEPEND'?'DEPEND':e.type==='SIMILAR'?'SIMILAR':'STORED_AT';
+              return `<g><line class="graph-edge ${cls}" x1="${g.x1}" y1="${g.y1}" x2="${g.x2}" y2="${g.y2}" marker-end="${marker}"/>
+                <text class="graph-edge-label" x="${g.mx}" y="${g.my-4}" text-anchor="middle">${label}</text></g>`;
+            }).join('')}
+            ${nodes.map(n=>{
+              const r = radiusOf(n.type);
+              const labelText = n.label.length>10?n.label.slice(0,9)+'…':n.label;
+              return `<g class="graph-node">
+                <circle cx="${n.x}" cy="${n.y}" r="${r}" fill="${colorOf(n.type)}" stroke="#fff" stroke-width="2"/>
+                <text x="${n.x}" y="${n.y+4}" text-anchor="middle">${labelText}</text>
+              </g>`;
+            }).join('')}
+          </svg>
+
+          <div class="graph-zoom">
+            <button title="放大">⊕</button>
+            <button title="缩小">⊖</button>
+            <button title="适应屏幕">▣</button>
+          </div>
+        </div>
+
+        <aside class="graph-side">
+          <h4>Overview <span class="arr">›</span></h4>
+          <div style="font-weight:600;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Node labels</div>
+          <div class="pill-row">
+            <span class="graph-pill gray">* (${nodes.length})</span>
+            <span class="graph-pill purple">Software (${counts.software})</span>
+            <span class="graph-pill pink">Repository (${counts.repo})</span>
+            <span class="graph-pill" style="background:#7c8def;color:#fff">Similar (${counts.similar})</span>
+          </div>
+          <div style="font-weight:600;font-size:12px;color:var(--text-secondary);margin-bottom:6px">Relationship Types</div>
+          <div class="pill-row">
+            <span class="graph-pill rel">* (${edges.length})</span>
+            <span class="graph-pill rel">DEPEND (${relCounts.DEPEND||0})</span>
+            <span class="graph-pill rel">SIMILAR (${relCounts.SIMILAR||0})</span>
+            <span class="graph-pill rel">STORED_AT (${relCounts.STORED_AT||0})</span>
+          </div>
+          <div class="graph-stat">Displaying ${nodes.length} nodes, ${edges.length} relationships.</div>
+
+          <div style="border-top:1px solid var(--border-subtle);margin-top:18px;padding-top:16px;">
+            <div style="font-size:12px;color:var(--text-tertiary);line-height:1.7">
+              <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1F70CE;margin-right:6px"></span>当前组件</div>
+              <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c990c0;margin-right:6px"></span>软件组件</div>
+              <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7c8def;margin-right:6px"></span>相似组件</div>
+              <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f9c6c9;margin-right:6px"></span>仓库</div>
+              <div style="margin-top:6px"><span style="display:inline-block;width:18px;height:0;border-top:1.5px solid #bdbdbd;margin-right:6px;vertical-align:middle"></span>DEPEND（已明确依赖）</div>
+              <div><span style="display:inline-block;width:18px;height:0;border-top:1.5px dashed #1F70CE;margin-right:6px;vertical-align:middle"></span>SIMILAR（相似关系）</div>
+            </div>
+          </div>
+        </aside>
+      </div>`;
+  }
+
+  return `<div class="content">
+    <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="navigate('detail')">&larr; 返回组件详情</button></div>
+    <div class="detail-header">
+      <div class="flex-between">
+        <div>
+          <h2>${c.name} <span class="tag tag-blue" style="font-size:12px;vertical-align:middle">v${v.version}</span> ${v.isLatest?'<span class="tag tag-green" style="font-size:12px;vertical-align:middle">最新</span>':''}</h2>
+          <div class="purl">${c.purl.split('@')[0]}@${v.version}</div>
+          <div class="desc">${v.changelog}</div>
+        </div>
+        <div class="trust-score ${v.score>=90?'':(v.score>=80?'warn':'danger')}" style="flex-direction:column;align-items:center;padding:14px 20px;border-radius:10px;">
+          <div class="ts-label">本版本可信评分</div>
+          <div class="ts-val" style="color:${v.score>=90?'var(--success)':v.score>=80?'var(--warning)':'var(--error)'};font-size:30px;margin:4px 0;">${v.score}</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">发布于 ${v.released}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <span class="text-sm text-muted">切换版本：</span>
+        ${versions.map(vv=>`<button class="btn btn-sm ${vv.version===v.version?'btn-primary':''}" onclick="currentVersion='${vv.version}';render();">v${vv.version}</button>`).join('')}
+        <span style="flex:1"></span>
+        <button class="btn" onclick="currentModal='addToList';render();">${icons.plus} 加入清单</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tabs">${tabs.map(t=>`<div class="tab ${versionDetailTab===t.id?'active':''}" onclick="versionDetailTab='${t.id}';render();">${t.label}</div>`).join('')}</div>
+      ${tabContent}
+    </div>
+    ${currentModal==='addToList'?renderAddToListModal():''}
+  </div>`;
+}
+
+function renderAddToListModal(){
+  const c = components[0];
+  const v = (componentVersions[c.name]||[]).find(x=>x.version===currentVersion) || (componentVersions[c.name]||[])[0];
+  return `<div class="modal-overlay" onclick="currentModal=null;render();">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">加入选型清单<button class="close-btn" onclick="currentModal=null;render();">&times;</button></div>
+      <div class="modal-body">
+        <div class="form-group mb-16"><label>选择清单</label>
+          <select class="input"><option>工业视觉项目组件清单</option><option>CAD基础依赖清单</option><option>+ 新建清单</option></select>
+        </div>
+        <div class="text-sm text-muted">组件 ${c.name}@${v.version} 将被添加到所选清单中</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="currentModal=null;render();">取消</button>
+        <button class="btn btn-primary" onclick="alert('已添加到选型清单');currentModal=null;render();">确认添加</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Shortlist
+function pageMyDownloads() {
+  const alertMap = {};
+  getAlerts().filter(a => a.source==='download').forEach(a => {
+    const key = a.component + '@' + a.version;
+    if (!alertMap[key]) alertMap[key] = [];
+    alertMap[key].push(a.vuln);
+  });
+  return `<div class="content">
+    <div class="page-title">我的下载记录</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="table"><thead><tr><th>时间</th><th>组件</th><th>类型</th><th>大小</th><th>风险预警</th></tr></thead>
+      <tbody>${logs.download.map(d => {
+        const key = d.component;
+        const parts = d.component.split('@');
+        const newVulns = alertMap[key] || [];
+        const warnCell = newVulns.length > 0
+          ? `<div style="display:flex;flex-direction:column;gap:4px">${newVulns.map(v=>`
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span class="tag ${v.level==='高'?'tag-red':v.level==='中'?'tag-orange':'tag-blue'}">${v.level}危</span>
+                <span style="font-size:12px;font-weight:600">${v.id}</span>
+                ${v.poc==='已发布'?'<span class="tag tag-red" style="font-size:11px">PoC</span>':''}
+              </div>
+              <div style="font-size:11px;color:var(--text-tertiary)">发现于 ${v.foundTime}</div>
+            `).join('')}</div>`
+          : `<span style="color:var(--success);font-size:13px">✓ 暂无新漏洞</span>`;
+        return `<tr>
+          <td style="white-space:nowrap">${d.time}</td>
+          <td><span style="font-weight:600">${parts[0]}</span><span class="text-muted" style="font-size:12px"> @${parts[1]||''}</span></td>
+          <td><span class="tag tag-blue">${d.type}</span></td>
+          <td style="color:var(--text-secondary)">${d.size}</td>
+          <td>${warnCell}</td>
+        </tr>`;
+      }).join('')}</tbody></table>
+    </div>
+  </div>`;
+}
+
+function pageShortlist(){
+  const lists = [
+    {name:'工业视觉项目组件清单', count:12, created:'2026-03-15', updated:'2026-04-08', hasAlert:true},
+    {name:'CAD基础依赖清单', count:8, created:'2026-02-20', updated:'2026-04-05', hasAlert:false},
+    {name:'机器人控制系统依赖', count:15, created:'2026-01-10', updated:'2026-03-28', hasAlert:false},
+  ];
+  const shortlistAlerts = getAlerts().filter(a => a.source==='shortlist');
+  return `<div class="content">
+    <div class="page-title flex-between"><span>选型清单管理</span><button class="btn btn-primary" onclick="currentModal='newList';render();">${icons.plus} 新增清单</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="table"><thead><tr><th>清单名称</th><th>组件数量</th><th>创建时间</th><th>最近更新</th><th>操作</th></tr></thead>
+      <tbody>${lists.map(l=>{
+        const alertCount = l.hasAlert ? shortlistAlerts.length : 0;
+        const alertTag = alertCount > 0
+          ? `<span class="tag tag-red" style="margin-left:8px;font-size:11px">⚠ ${alertCount} 条新漏洞</span>`
+          : '';
+        return `<tr>
+          <td><a style="color:var(--primary-500);cursor:pointer" onclick="currentDrawer='listDetail';render();">${l.name}</a>${alertTag}</td>
+          <td>${l.count}</td><td>${l.created}</td><td>${l.updated}</td>
+          <td class="gap-8"><button class="btn btn-sm">${icons.download} 导出</button><button class="btn btn-sm btn-danger">删除</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      <div class="pagination" style="padding:12px"><span>共 3 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+    </div>
+    ${currentModal==='newList'?`<div class="modal-overlay" onclick="currentModal=null;render();">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">新增选型清单<button class="close-btn" onclick="currentModal=null;render();">&times;</button></div>
+        <div class="modal-body">
+          <div class="form-group"><label class="required">清单名称</label><input class="input" placeholder="请输入清单名称"/></div>
+        </div>
+        <div class="modal-footer"><button class="btn" onclick="currentModal=null;render();">取消</button><button class="btn btn-primary">创建</button></div>
+      </div>
+    </div>`:''}
+    ${currentDrawer==='listDetail'?renderListDetailDrawer():''}
+  </div>`;
+}
+
+function renderListDetailDrawer(){
+  const items = components.slice(0,3);
+  const shortlistAlerts = getAlerts().filter(a => a.source==='shortlist');
+  const warnIcon = `<svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+  return `<div class="drawer-overlay" onclick="currentDrawer=null;render();"></div>
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-header">清单详情 - 工业视觉项目组件清单<button class="close-btn" onclick="currentDrawer=null;render();">&times;</button></div>
+    <div class="drawer-body">
+      <div class="flex-between mb-16">
+        <span class="text-sm text-muted">共 ${items.length} 个组件</span>
+        <div class="gap-8">
+          <button class="btn btn-sm btn-primary">${icons.plus} 添加组件</button>
+        </div>
+      </div>
+      ${items.map(c=>{
+        const ver = c.purl.split('@')[1];
+        const compAlerts = shortlistAlerts.filter(a => a.component===c.name && a.version===ver);
+        const hasAlert = compAlerts.length > 0;
+        const alertBlock = hasAlert ? `
+          <div style="margin-top:8px;padding:10px 12px;border-radius:var(--radius-sm);background:#fff7e6;border:1px solid #ffd591;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;font-weight:600;color:var(--warning)">
+              ${warnIcon} 新漏洞预警（${compAlerts.length} 条）
+            </div>
+            ${compAlerts.map(a=>`
+              <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px solid #ffe7a0;flex-wrap:wrap;">
+                <span class="tag ${a.vuln.level==='高'?'tag-red':a.vuln.level==='中'?'tag-orange':'tag-blue'}" style="flex-shrink:0">${a.vuln.level}危</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:12px;font-weight:600;margin-bottom:2px">${a.vuln.id}
+                    ${a.vuln.poc==='已发布'?'<span class="tag tag-red" style="font-size:11px;margin-left:4px">PoC已发布</span>':''}
+                  </div>
+                  <div style="font-size:11px;color:var(--text-secondary)">${a.vuln.desc}</div>
+                  <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">发现于 ${a.vuln.foundTime} · 修复建议：${a.vuln.fix}</div>
+                </div>
+              </div>`).join('')}
+          </div>` : '';
+        return `<div style="padding:12px 0;border-bottom:1px solid var(--border-subtle);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-weight:600;font-size:13px">${c.name}</span>
+              <span class="text-muted" style="font-size:12px">${ver}</span>
+              <span class="tag tag-blue">${c.category}</span>
+              ${hasAlert?`<span class="tag tag-red" style="font-size:11px">⚠ 新漏洞</span>`:''}
+            </div>
+            <button class="btn btn-sm btn-danger">移除</button>
+          </div>
+          ${alertBlock}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="drawer-footer"><button class="btn btn-primary">${icons.download} 导出清单</button></div>
+  </div>`;
+}
+
+// PAGE: Component Info Management（三级：组件列表 → 组件维度+版本列表 → 版本维度）
+function pageCompInfo(){
+  // ---------- 第一级：组件检索列表 ----------
+  if(!selectedManageComp){
+    return `<div class="content">
+      <div class="page-title flex-between"><span>组件信息管理</span><button class="btn btn-primary">${icons.plus} 新增组件</button></div>
+      <div class="card mb-16">
+        <div class="gap-8" style="flex:1">
+          <input class="input" style="max-width:360px" placeholder="输入组件名称、PURL 检索目标组件..."/>
+          <select class="input" style="width:140px"><option>全部分类</option><option>基础库</option><option>数学计算</option><option>界面框架</option><option>CAD引擎</option></select>
+          <select class="input" style="width:130px"><option>全部状态</option><option>已完成引入</option><option>更新</option><option>退出</option></select>
+          <button class="btn btn-primary">${icons.search} 检索</button>
+        </div>
+        <div class="text-sm text-muted mb-16" style="margin-top:12px">请先检索并选择组件，再进入组件维度与版本维度的信息维护。</div>
+        <table class="table">
+          <thead><tr><th>组件名称</th><th>PURL</th><th>分类</th><th>版本数</th><th>状态</th><th>最新版本可信评分</th><th style="width:140px">操作</th></tr></thead>
+          <tbody>
+            ${components.map(c=>{
+              const vs = componentVersions[c.name]||[];
+              return `<tr>
+                <td><b>${c.name}</b></td>
+                <td style="font-family:monospace;font-size:12px">${c.purl}</td>
+                <td><span class="tag tag-blue">${c.category}</span></td>
+                <td>${vs.length||'-'}</td>
+                <td><span class="tag ${c.status==='存储'?'tag-green':'tag-orange'}">${c.status==='存储'?'已完成引入':c.status}</span></td>
+                <td><b style="color:${c.score>=90?'var(--success)':c.score>=80?'var(--primary-500)':'var(--warning)'}">${c.score}</b></td>
+                <td><button class="btn btn-sm btn-primary" onclick="selectedManageComp=${JSON.stringify(c).replace(/"/g,'&quot;')};selectedManageVersion=null;manageCompTab='basic';render();">管理 &rarr;</button></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div class="pagination"><span>共 ${components.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+      </div>
+    </div>`;
+  }
+
+  const c = selectedManageComp;
+  const versions = componentVersions[c.name] || [];
+
+  // ---------- 第三级：版本维度编辑 ----------
+  if(selectedManageVersion){
+    const v = selectedManageVersion;
+    const verTabs = [
+      {id:'basic', label:'版本基本信息'},
+      {id:'vuln', label:'漏洞管理'},
+      {id:'trust', label:'可信扫描结果'},
+    ];
+    const scores = versionTrustScores[v.version] || versionTrustScores['4.9.0'];
+
+    let vc = '';
+    if(manageVerTab==='basic'){
+      vc = `<div class="form-row">
+        <div class="form-group"><label class="required">版本号</label><input class="input" value="${v.version}"/></div>
+        <div class="form-group"><label>是否最新版本</label><select class="input"><option ${v.isLatest?'selected':''}>是</option><option ${!v.isLatest?'selected':''}>否</option></select></div>
+        <div class="form-group"><label>发布时间</label><input class="input" type="date" value="${v.released}"/></div>
+        <div class="form-group"><label>下载量</label><input class="input" value="${v.downloads}"/></div>
+      </div>
+      <div class="form-group mb-16"><label>变更说明</label><textarea class="input">${v.changelog}</textarea></div>
+      <div class="form-group mb-16"><label>版本间关系（与上一版本对比）</label><input class="input" placeholder="如：基于 4.8.1 的 minor 更新，向后兼容"/></div>
+      <div class="gap-8"><button class="btn btn-primary">保存修改</button><button class="btn btn-danger">删除该版本</button></div>`;
+    } else if(manageVerTab==='vuln'){
+      const vulnManageList = getVulns(c.name, v.version);
+      function parseFixVersion(fixStr) {
+        const m = fixStr.match(/升级到\s+([\d.]+)/);
+        return m ? m[1] : null;
+      }
+      vc = `<div class="flex-between mb-16"><span class="text-sm text-muted">本版本相关漏洞，包含披露时间、等级、修复措施、补丁及 PoC 状态</span><button class="btn btn-sm btn-primary">${icons.plus} 新增漏洞</button></div>
+      <table class="table"><thead><tr><th>CVE编号</th><th>等级</th><th>描述</th><th>漏洞分类</th><th>披露时间</th><th>修复措施</th><th>补丁发布</th><th>PoC</th><th>参考链接</th><th>修复操作</th><th style="width:120px">操作</th></tr></thead>
+      <tbody>
+        ${vulnManageList.length===0?'<tr><td colspan="12" class="empty">当前版本未发现已知漏洞</td></tr>':vulnManageList.map(vv=>{
+          const suggestVer = parseFixVersion(vv.fix);
+          const fixBtn = suggestVer ? `<button class="btn btn-sm btn-primary" onclick="currentVersion='${suggestVer}';versionDetailTab='code';render();">查看 v${suggestVer}</button>` : '<span class="text-sm text-muted">-</span>';
+          return `<tr>
+            <td><b>${vv.id}</b></td>
+            <td><span class="tag ${vv.level==='高'?'tag-red':vv.level==='中'?'tag-orange':'tag-blue'}">${vv.level}</span></td>
+            <td>${vv.desc}</td>
+            <td><span class="tag tag-gray">${vv.cwe}</span></td>
+            <td>${vv.disclose}</td>
+            <td>${vv.fix}</td>
+            <td><span class="tag ${vv.patch==='已发布'?'tag-green':'tag-orange'}">${vv.patch}</span></td>
+            <td><span class="tag ${vv.poc==='已发布'?'tag-red':'tag-gray'}">${vv.poc}</span></td>
+            <td>${vv.refs.map(r=>`<a href="${r}" target="_blank" style="color:var(--primary-500);font-size:12px">${r}</a>`).join('<br/>')}</td>
+            <td class="gap-8">${fixBtn}</td>
+            <td class="gap-8"><button class="btn btn-sm">编辑</button><button class="btn btn-sm btn-danger">删除</button></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`;
+    } else {
+      vc = `<div class="text-sm text-muted mb-16">可信扫描结果由底层可信安全扫描工具提供，平台仅展示，不可编辑。</div>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:24px;">
+          <div class="trust-score" style="flex-direction:column;align-items:center;padding:20px;border-radius:10px;height:fit-content;">
+            <div class="ts-label">本版本综合评分</div>
+            <div class="ts-val" style="color:var(--success);font-size:38px;margin:6px 0;">${v.score}</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">最近评估 2026-03-20</div>
+          </div>
+          <div>
+            ${trustDimensions.map(d=>{
+              const val = scores[d.key];
+              const color = val>=90?'var(--success)':val>=80?'var(--primary-500)':'var(--warning)';
+              return `<div class="dim-card">
+                <div class="dim-card-head"><div class="dim-card-title">${d.label}</div><div class="score-label" style="color:${color};font-size:16px;">${val}</div></div>
+                <div class="dim-card-desc">${d.desc}</div>
+                <div class="score-bar-track"><div class="score-bar-fill" style="width:${val}%;background:${color}"></div></div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        <div style="margin-top:16px;text-align:right"><button class="btn btn-sm">${icons.refresh} 重新触发扫描</button></div>`;
+    }
+
+    return `<div class="content">
+      <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="selectedManageVersion=null;render();">&larr; 返回组件 ${c.name} 信息管理</button></div>
+      <div class="detail-header">
+        <div class="flex-between">
+          <div>
+            <h2>${c.name} <span class="tag tag-blue" style="font-size:12px;vertical-align:middle">v${v.version}</span> ${v.isLatest?'<span class="tag tag-green" style="font-size:12px;vertical-align:middle">最新</span>':''}</h2>
+            <div class="purl">${c.purl.split('@')[0]}@${v.version}</div>
+            <div class="desc">${v.changelog}</div>
+          </div>
+          <div class="trust-score" style="flex-direction:column;align-items:center;padding:14px 20px;border-radius:10px;">
+            <div class="ts-label">本版本可信评分</div>
+            <div class="ts-val" style="color:var(--success);font-size:30px;margin:4px 0;">${v.score}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="tabs">${verTabs.map(t=>`<div class="tab ${manageVerTab===t.id?'active':''}" onclick="manageVerTab='${t.id}';render();">${t.label}</div>`).join('')}</div>
+        ${vc}
+      </div>
+    </div>`;
+  }
+
+  // ---------- 第二级：组件维度 + 版本列表 ----------
+  const compTabs = [
+    {id:'basic', label:'组件基础信息'},
+    {id:'similar', label:'相似组件'},
+    {id:'lifecycle', label:'生命周期与下载控制'},
+  ];
+
+  let cc = '';
+  if(manageCompTab==='basic'){
+    cc = `<div class="form-row">
+      <div class="form-group"><label class="required">组件名称</label><input class="input" value="${c.name}"/></div>
+      <div class="form-group"><label class="required">PURL标识</label><input class="input" value="${c.purl.split('@')[0]}"/></div>
+      <div class="form-group"><label>分类</label><select class="input"><option selected>${c.category}</option><option>数学计算</option><option>界面框架</option><option>CAD引擎</option></select></div>
+      <div class="form-group"><label>许可证</label><input class="input" value="MIT License"/></div>
+    </div>
+    <div class="form-group mb-16"><label>标签</label><input class="input" value="${c.tags.join(', ')}"/></div>
+    <div class="form-group mb-16"><label>组件描述</label><textarea class="input">${c.desc}</textarea></div>
+    <div class="text-sm text-muted mb-16">注：版本号、漏洞、可信扫描等信息归属版本维度，请进入下方版本列表对应版本内维护。</div>
+    <div class="gap-8"><button class="btn btn-primary">保存修改</button></div>`;
+  } else if(manageCompTab==='similar'){
+    cc = `<div class="flex-between mb-16"><span class="text-sm text-muted">基于标签、分类等维度建立组件级别的相似关系，作用于组件整体</span><button class="btn btn-sm btn-primary">${icons.plus} 添加相似组件</button></div>
+    <table class="table"><thead><tr><th>相似组件</th><th>相似维度</th><th>相似度</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td>Pillow</td><td>标签: 图像处理</td><td>85%</td><td><button class="btn btn-sm btn-danger">移除</button></td></tr>
+      <tr><td>Scikit-Image</td><td>标签: 图像处理, 分类: 基础库</td><td>78%</td><td><button class="btn btn-sm btn-danger">移除</button></td></tr>
+    </tbody></table>`;
+  } else {
+    cc = `<div class="form-row">
+      <div class="form-group"><label>当前生命周期状态</label><input class="input" value="已完成引入" disabled/></div>
+      <div class="form-group"><label>引入时间</label><input class="input" value="2025-06-15" disabled/></div>
+      <div class="form-group"><label>最近状态变更</label><input class="input" value="2026-03-20" disabled/></div>
+      <div class="form-group"><label class="required">下载控制</label><select class="input"><option selected>允许下载</option><option>禁止下载</option></select></div>
+    </div>
+    <div class="text-sm text-muted mb-16">
+      生命周期状态请到「<a style="color:var(--primary-500);cursor:pointer" onclick="navigate('comp-lifecycle')">组件管理 → 组件生命周期</a>」专用页面调整，此处仅展示当前状态。<br/>
+      下载控制对该组件下所有版本生效；如需对单个版本独立控制，请进入版本维度操作。
+    </div>
+    <div class="gap-8"><button class="btn btn-primary">保存下载控制</button><button class="btn btn-danger">禁用下载</button></div>`;
+  }
+
+  return `<div class="content">
+    <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="selectedManageComp=null;render();">&larr; 返回组件列表</button></div>
+
+    <div class="detail-header">
+      <div class="flex-between">
+        <div style="flex:1">
+          <h2>${c.name} <span class="tag tag-green" style="font-size:12px;vertical-align:middle">已完成引入</span></h2>
+          <div class="purl">${c.purl}</div>
+          <div class="desc">${c.desc}</div>
+        </div>
+        <div class="trust-score" style="flex-direction:column;align-items:center;padding:14px 20px;border-radius:10px;margin-left:24px">
+          <div class="ts-label">最新版本可信评分</div>
+          <div class="ts-val" style="color:var(--success);font-size:30px;margin:4px 0;">${c.score}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-16">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--primary-500)">▎组件维度信息</div>
+      <div class="tabs">${compTabs.map(t=>`<div class="tab ${manageCompTab===t.id?'active':''}" onclick="manageCompTab='${t.id}';render();">${t.label}</div>`).join('')}</div>
+      ${cc}
+    </div>
+
+    <div class="card">
+      <div class="card-title flex-between">
+        <span>▎版本管理（共 ${versions.length} 个版本）</span>
+        <button class="btn btn-sm btn-primary">${icons.plus} 新增版本</button>
+      </div>
+      <div class="text-sm text-muted mb-16">版本号、漏洞、可信扫描结果等版本级别的信息，进入对应版本维护。</div>
+      <table class="table">
+        <thead><tr><th>版本号</th><th>发布时间</th><th>下载量</th><th>变更说明</th><th>可信评分</th><th>状态</th><th style="width:160px">操作</th></tr></thead>
+        <tbody>
+          ${versions.map(v=>{
+            const sc = v.score>=90?'var(--success)':v.score>=80?'var(--primary-500)':'var(--warning)';
+            return `<tr>
+              <td><b>${v.version}</b> ${v.isLatest?'<span class="tag tag-blue">最新</span>':''}</td>
+              <td>${v.released}</td>
+              <td>${v.downloads.toLocaleString()}</td>
+              <td style="max-width:280px;white-space:normal;color:var(--text-secondary);font-size:12px">${v.changelog}</td>
+              <td><b style="color:${sc}">${v.score}</b></td>
+              <td><span class="tag tag-green">已发布</span></td>
+              <td class="gap-8">
+                <button class="btn btn-sm btn-primary" onclick="selectedManageVersion=${JSON.stringify(v).replace(/"/g,'&quot;')};manageVerTab='basic';render();">管理</button>
+                <button class="btn btn-sm btn-danger">删除</button>
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// PAGE: Lifecycle
+function pageLifecycle(){
+  const stages = [
+    {key:'待引入', label:'待引入', desc:'链平台登记或用户提交需求'},
+    {key:'已完成引入', label:'已完成引入', desc:'资源已存储，可检索与下载'},
+    {key:'更新', label:'更新', desc:'存在新版本或维护中'},
+    {key:'退出', label:'退出', desc:'停止使用，不再推荐'},
+  ];
+  // 合并已有组件 + 待引入组件到统一视图（用于"组件状态总览"tab）
+  const existing = components.map(c=>({
+    name:c.name, version:c.purl.split('@')[1], status: c.status==='引入'?'待引入':'已完成引入',
+    introTime:'2025-06-15', lastChange:'2026-03-20', source:'平台管理员新增', applicant:'-'
+  }));
+  const pending = pendingComponents.map(p=>({
+    name:p.name, version:p.version, status:'待引入',
+    introTime:p.applyTime, lastChange:p.applyTime, source:p.source, applicant:p.applicant
+  }));
+  // 模拟"更新"和"退出"状态
+  const updating = [{name:'Qt', version:'6.7.0→6.7.1', status:'更新', introTime:'2025-06-15', lastChange:'2026-04-02', source:'平台自动检测', applicant:'-'}];
+  const retired = [{name:'OldFreeCAD', version:'0.20.0', status:'退出', introTime:'2024-01-10', lastChange:'2026-01-15', source:'平台管理员', applicant:'-'}];
+  const all = [...pending, ...existing, ...updating, ...retired];
+
+  // 统计数据
+  const approvedCount = processedRequirements.filter(r=>r.result==='确认引入').length;
+  const rejectedCount = processedRequirements.filter(r=>r.result==='拒绝').length;
+  const inUseCount = existing.filter(e=>e.status==='已完成引入').length + updating.length;
+  const pendingCount = pendingComponents.length;
+  const retiredCount = retired.length;
+
+  // ----- Tab 内容 -----
+  let tabContent = '';
+
+  if(lifecycleTab==='pending'){
+    // 待处理需求
+    tabContent = `<div style="padding:16px 20px 0" class="flex-between">
+        <div class="text-sm text-muted">来自链平台自动登记 / 用户提交的引入需求，需要管理员审批</div>
+        <div class="gap-8">
+          <input class="input" style="width:200px" placeholder="搜索组件名称..."/>
+          <select class="input" style="width:140px"><option>全部来源</option><option>用户需求提交</option><option>链平台</option></select>
+          <button class="btn btn-sm">${icons.search} 查询</button>
+        </div>
+      </div>
+      <table class="table" style="margin-top:12px"><thead><tr><th>组件名称</th><th>版本</th><th>发起人</th><th>来源</th><th>发起时间</th><th>需求说明</th><th>漏洞扫描</th><th style="width:200px">操作</th></tr></thead>
+      <tbody>${pendingComponents.length===0?`<tr><td colspan="8" class="empty">暂无待处理需求</td></tr>`:pendingComponents.map(p=>{
+        // 模拟漏洞扫描：根据组件名匹配已有漏洞数据，否则显示"暂无数据"
+        const knownVulns = vulnerabilityDB[p.name] && vulnerabilityDB[p.name][p.version] ? vulnerabilityDB[p.name][p.version] : [];
+        const rs = getRiskSummary(knownVulns);
+        const vulnScan = knownVulns.length>0 ? `
+          <div style="font-size:12px">
+            <div>漏洞 ${knownVulns.length} 个</div>
+            <div style="color:${rs.rl.color};font-weight:500">${rs.rl.label}</div>
+            ${rs.pocCount>0?`<div style="color:var(--error)">⚠ PoC ${rs.pocCount} 个</div>`:''}
+          </div>` : `<div style="font-size:12px;color:var(--text-tertiary)">暂无漏洞数据</div>`;
+        const riskWarn = knownVulns.length>0 && (rs.rl.level==='high' || rs.pocCount>0) ? `
+          <div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:#fef0f0;border:1px solid #ffa39e;font-size:11px;color:var(--error)">
+            ⚠️ 存在高危风险，建议谨慎审批
+          </div>` : '';
+        return `<tr>
+          <td><b>${p.name}</b></td>
+          <td>${p.version}</td>
+          <td>${p.applicant}${p.applicantTenant!=='-'?` <span class="text-sm text-muted">(${p.applicantTenant})</span>`:''}</td>
+          <td><span class="tag ${p.source==='链平台'?'tag-blue':'tag-orange'}">${p.source}</span></td>
+          <td>${p.applyTime}</td>
+          <td style="max-width:280px;white-space:normal;color:var(--text-secondary);font-size:12px">${p.reason}</td>
+          <td>${vulnScan}${riskWarn}</td>
+          <td class="gap-8" style="flex-direction:column;align-items:flex-start;gap:4px">
+            <button class="btn btn-sm btn-primary">确认引入</button>
+            <button class="btn btn-sm">拒绝</button>
+            ${knownVulns.length>0 && (rs.rl.level==='high' || rs.pocCount>0) ? `<button class="btn btn-sm btn-danger" style="font-size:11px;padding:2px 8px">拒绝理由：存在未修复高危漏洞</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      <div class="pagination" style="padding:12px 20px"><span>共 ${pendingComponents.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>`;
+  } else if(lifecycleTab==='processed'){
+    // 处理历史
+    const filtered = processedRequirements.filter(r=>{
+      if(lifecycleProcessedFilter==='approved') return r.result==='确认引入';
+      if(lifecycleProcessedFilter==='rejected') return r.result==='拒绝';
+      return true;
+    });
+    const pillStyle = (active)=>`cursor:pointer;padding:4px 10px;border-radius:var(--radius);background:${active?'var(--primary-50)':'transparent'};color:${active?'var(--primary-500)':'var(--text-secondary)'};font-size:13px;`;
+    tabContent = `<div style="padding:16px 20px 0" class="flex-between">
+        <div class="gap-8">
+          <a style="${pillStyle(lifecycleProcessedFilter==='all')}" onclick="lifecycleProcessedFilter='all';render();">全部 ${processedRequirements.length}</a>
+          <a style="${pillStyle(lifecycleProcessedFilter==='approved')}" onclick="lifecycleProcessedFilter='approved';render();">仅确认引入 ${approvedCount}</a>
+          <a style="${pillStyle(lifecycleProcessedFilter==='rejected')}" onclick="lifecycleProcessedFilter='rejected';render();">仅拒绝 ${rejectedCount}</a>
+        </div>
+        <div class="gap-8">
+          <input class="input" style="width:180px" placeholder="搜索组件名称..."/>
+          <input class="input" style="width:140px" type="date" value="2026-03-01"/>
+          <span class="text-muted">至</span>
+          <input class="input" style="width:140px" type="date" value="2026-04-08"/>
+          <button class="btn btn-sm">${icons.download} 导出</button>
+        </div>
+      </div>
+      <table class="table" style="margin-top:12px">
+        <thead><tr><th>组件名称</th><th>版本</th><th>发起人</th><th>来源</th><th>发起时间</th><th>处理结果</th><th>处理人</th><th>处理时间</th><th>处理说明</th><th style="width:80px">操作</th></tr></thead>
+        <tbody>${filtered.length===0?`<tr><td colspan="10" class="empty">暂无记录</td></tr>`:filtered.map(r=>`<tr>
+          <td><b>${r.name}</b></td>
+          <td>${r.version}</td>
+          <td>${r.applicant}${r.applicantTenant!=='-'?` <span class="text-sm text-muted">(${r.applicantTenant})</span>`:''}</td>
+          <td><span class="tag ${r.source==='链平台'?'tag-blue':'tag-orange'}">${r.source}</span></td>
+          <td>${r.applyTime}</td>
+          <td><span class="tag ${r.result==='确认引入'?'tag-green':'tag-red'}">${r.result}</span></td>
+          <td>${r.processor}</td>
+          <td>${r.processTime}</td>
+          <td style="max-width:240px;white-space:normal;color:var(--text-secondary);font-size:12px">${r.remark}</td>
+          <td><button class="btn btn-sm">详情</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+      <div class="pagination" style="padding:12px 20px"><span>共 ${filtered.length} 条</span><div class="pagination-btns"><button>&lt;</button><button class="active">1</button><button>&gt;</button></div></div>`;
+  } else {
+    // 组件状态总览
+    const filteredAll = all.filter(item=>{
+      if(lifecycleStatusFilter==='all') return true;
+      const map = {pending:'待引入', done:'已完成引入', update:'更新', retired:'退出'};
+      return item.status === map[lifecycleStatusFilter];
+    });
+    const pillStyle = (active)=>`cursor:pointer;padding:4px 10px;border-radius:var(--radius);background:${active?'var(--primary-50)':'transparent'};color:${active?'var(--primary-500)':'var(--text-secondary)'};font-size:13px;`;
+    tabContent = `<div style="padding:16px 20px 0" class="flex-between">
+        <div class="gap-8">
+          <a style="${pillStyle(lifecycleStatusFilter==='all')}" onclick="lifecycleStatusFilter='all';render();">全部 ${all.length}</a>
+          <a style="${pillStyle(lifecycleStatusFilter==='pending')}" onclick="lifecycleStatusFilter='pending';render();">待引入 ${pendingCount}</a>
+          <a style="${pillStyle(lifecycleStatusFilter==='done')}" onclick="lifecycleStatusFilter='done';render();">已完成引入 ${existing.filter(e=>e.status==='已完成引入').length}</a>
+          <a style="${pillStyle(lifecycleStatusFilter==='update')}" onclick="lifecycleStatusFilter='update';render();">更新 ${updating.length}</a>
+          <a style="${pillStyle(lifecycleStatusFilter==='retired')}" onclick="lifecycleStatusFilter='retired';render();">退出 ${retired.length}</a>
+        </div>
+        <div class="gap-8">
+          <input class="input" style="width:200px" placeholder="搜索组件名称..."/>
+          <button class="btn btn-sm btn-primary">${icons.search} 查询</button>
+        </div>
+      </div>
+      <table class="table" style="margin-top:12px"><thead><tr><th>组件名称</th><th>版本</th><th>当前状态</th><th>引入时间</th><th>最近变更</th><th>来源/发起人</th><th style="width:120px">操作</th></tr></thead>
+      <tbody>${filteredAll.length===0?`<tr><td colspan="7" class="empty">无符合条件的组件</td></tr>`:filteredAll.map(item=>{
+        const tagCls = item.status==='待引入'?'tag-orange':item.status==='已完成引入'?'tag-green':item.status==='更新'?'tag-blue':'tag-gray';
+        return `<tr>
+          <td><b>${item.name}</b></td>
+          <td>${item.version||'-'}</td>
+          <td><span class="tag ${tagCls}">${item.status}</span></td>
+          <td>${item.introTime}</td>
+          <td>${item.lastChange}</td>
+          <td>${item.applicant!=='-'?item.applicant:item.source}</td>
+          <td class="gap-8"><button class="btn btn-sm">调整状态</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      <div class="pagination" style="padding:12px 20px"><span>共 ${filteredAll.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>`;
+  }
+
+  return `<div class="content">
+    <div class="page-title">组件生命周期管理</div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:8px">生命周期流程</div>
+      <div class="lifecycle-flow" style="margin:8px 0 16px;">
+        ${stages.map((s,i)=>{
+          return `${i>0?`<div class="lifecycle-arrow"></div>`:''}
+            <div class="lifecycle-step"><div class="step-circle ${i===1?'active':i<1?'done':''}">${s.label}</div><div class="step-label">${s.desc}</div></div>`;
+        }).join('')}
+      </div>
+      <div class="stat-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:0;">
+        <div class="stat-card" style="border-color:var(--warning);cursor:pointer" onclick="lifecycleTab='pending';render();">
+          <div class="stat-label">待处理需求</div>
+          <div class="stat-value" style="color:var(--warning)">${pendingCount}<small>条待审批</small></div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="lifecycleTab='processed';lifecycleProcessedFilter='approved';render();">
+          <div class="stat-label">累计确认引入</div>
+          <div class="stat-value" style="color:var(--success)">${approvedCount}</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="lifecycleTab='processed';lifecycleProcessedFilter='rejected';render();">
+          <div class="stat-label">累计拒绝</div>
+          <div class="stat-value" style="color:var(--error)">${rejectedCount}</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="lifecycleTab='status';lifecycleStatusFilter='done';render();">
+          <div class="stat-label">在用组件</div>
+          <div class="stat-value">${inUseCount}</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer" onclick="lifecycleTab='status';lifecycleStatusFilter='retired';render();">
+          <div class="stat-label">已退出</div>
+          <div class="stat-value text-muted">${retiredCount}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="tabs" style="margin:0 20px;">
+        <div class="tab ${lifecycleTab==='pending'?'active':''}" onclick="lifecycleTab='pending';render();">
+          待处理需求
+          ${pendingCount>0?`<span class="tag tag-red" style="margin-left:6px;font-size:10px;padding:1px 6px;">${pendingCount}</span>`:''}
+        </div>
+        <div class="tab ${lifecycleTab==='processed'?'active':''}" onclick="lifecycleTab='processed';render();">处理历史</div>
+        <div class="tab ${lifecycleTab==='status'?'active':''}" onclick="lifecycleTab='status';render();">组件状态总览</div>
+      </div>
+      ${tabContent}
+    </div>
+  </div>`;
+}
+
+// PAGE: Code Management (先搜索选组件 → 进入代码仓库)
+function pageCompCode(){
+  // 未选择组件：展示组件列表
+  if(!selectedCodeComp){
+    return `<div class="content">
+      <div class="page-title">代码管理</div>
+      <div class="card mb-16">
+        <div class="gap-8" style="flex:1">
+          <input class="input" style="max-width:360px" placeholder="输入组件名称、PURL 或仓库标识..."/>
+          <select class="input" style="width:140px"><option>全部分类</option><option>基础库</option><option>数学计算</option><option>界面框架</option><option>CAD引擎</option></select>
+          <button class="btn btn-primary">${icons.search} 检索</button>
+        </div>
+        <div class="text-sm text-muted mb-16" style="margin-top:12px">请先检索并选择组件，再进入对应的代码仓库进行管理。</div>
+        <table class="table">
+          <thead><tr><th>组件名称</th><th>PURL</th><th>分类</th><th>最新版本</th><th>仓库状态</th><th style="width:140px">操作</th></tr></thead>
+          <tbody>
+            ${components.map(c=>`<tr>
+              <td><b>${c.name}</b></td>
+              <td style="font-family:monospace;font-size:12px">${c.purl}</td>
+              <td><span class="tag tag-blue">${c.category}</span></td>
+              <td>${c.purl.split('@')[1]}</td>
+              <td><span class="tag tag-green">已接入</span></td>
+              <td><button class="btn btn-sm btn-primary" onclick="selectedCodeComp=${JSON.stringify(c).replace(/"/g,'&quot;')};render();">管理代码 &rarr;</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="pagination"><span>共 ${components.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+      </div>
+    </div>`;
+  }
+
+  // 已选择组件：进入代码仓库管理
+  const c = selectedCodeComp;
+  const repoName = c.name.toLowerCase();
+  const files = [
+    {name:'README.en.md', msg:'Initial commit', time:'7 天前', icon:'file'},
+    {name:'README.md', msg:'Initial commit', time:'7 天前', icon:'file'},
+    {name:'CMakeLists.txt', msg:'更新构建配置', time:'7 天前', icon:'code'},
+    {name:`${repoName}-${c.purl.split('@')[1]}-src.tar.gz`, msg:`增加文件: ${repoName}-${c.purl.split('@')[1]}-src.tar.gz`, time:'7 天前', icon:'package'},
+  ];
+  return `<div class="content">
+    <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="selectedCodeComp=null;render();">&larr; 返回组件列表</button></div>
+
+    <div class="gitee-repo-header">
+      <div class="gitee-repo-title">
+        <div class="gitee-repo-icon">${c.name.charAt(0)}</div>
+        <div>
+          <div class="gitee-repo-name">${repoName}</div>
+          <div class="gitee-repo-id">Repository ID: 27169 · 关联组件 ${c.name} · ${c.purl}</div>
+        </div>
+      </div>
+      <div class="gitee-repo-stats">
+        <button class="gitee-stat-btn">${icons.activity} Watch <span class="num">0</span></button>
+        <button class="gitee-stat-btn">★ Star <span class="num">0</span></button>
+        <button class="gitee-stat-btn">⑂ Fork <span class="num">0</span></button>
+      </div>
+    </div>
+
+    <div class="gitee-layout">
+      <aside class="gitee-side">
+        <div class="gitee-side-item active">${icons.code} <span>代码</span></div>
+        <div class="gitee-side-item">${icons.upload} <span>提交</span><span class="badge">5</span></div>
+        <div class="gitee-side-item">${icons.refresh} <span>分支</span><span class="badge">1</span></div>
+        <div class="gitee-side-item">${icons.list} <span>Pull requests</span><span class="badge">0</span></div>
+        <div class="gitee-side-item">${icons.shield} <span>Issues</span><span class="badge">0</span></div>
+        <div class="gitee-side-item">${icons.box} <span>版本</span></div>
+        <div class="gitee-side-item">${icons.activity} <span>统计</span></div>
+        <div class="gitee-side-item">${icons.clock} <span>动态</span></div>
+        <div class="gitee-side-item">${icons.users} <span>成员</span></div>
+      </aside>
+
+      <div class="gitee-main">
+        <div class="gitee-branch-bar">
+          <div class="gitee-branch-left">
+            <button class="gitee-branch-pill">⑂ master ▾</button>
+            <span class="text-muted">⑂ 分支 1</span>
+            <span class="text-muted">⌖ 标签 0</span>
+          </div>
+          <div class="gap-8">
+            <button class="btn btn-sm">${icons.search}</button>
+            <button class="btn btn-sm">${icons.plus}</button>
+            <button class="btn btn-primary btn-sm">克隆/下载 ▾</button>
+          </div>
+        </div>
+
+        <div class="gitee-commit-bar">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="avatar" style="width:24px;height:24px;font-size:11px">陈</div>
+            <span><b>陈俊宏</b> 增加文件: ${repoName}-${c.purl.split('@')[1]}-src.tar.gz</span>
+          </div>
+          <div class="gap-8 text-muted text-sm">
+            <span>2678817</span>
+            <span>7 天前</span>
+            <span>5次提交</span>
+          </div>
+        </div>
+
+        <div class="gitee-file-list">
+          ${files.map(f=>`<div class="gitee-file-row">
+            <div class="gitee-file-icon">${icons[f.icon]}</div>
+            <div class="gitee-file-name">${f.name}</div>
+            <div class="gitee-file-msg">${f.msg}</div>
+            <div class="gitee-file-time">${f.time}</div>
+          </div>`).join('')}
+        </div>
+
+        <div class="gitee-readme">
+          <div class="gitee-readme-cards">
+            <div class="gitee-readme-card active">
+              <div class="rc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+              <div class="rc-label">README</div>
+            </div>
+            <div class="gitee-readme-card">
+              <div class="rc-icon"><svg viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
+              <div class="rc-label">无许可证信息</div>
+            </div>
+          </div>
+          <div class="gitee-readme-body">
+            <div class="gitee-readme-toc">
+              <a class="active">· 代码库说明</a>
+              <a>· 介绍</a>
+              <a>· 软件架构</a>
+              <a>· 安装教程</a>
+              <a>· 使用说明</a>
+            </div>
+            <div class="gitee-readme-content">
+              <h3>代码库说明</h3>
+              <h4>介绍</h4>
+              <p>${c.desc}</p>
+              <h4>软件架构</h4>
+              <p>软件架构说明</p>
+              <h4>安装教程</h4>
+              <p>xxxx xxxx xxxx</p>
+              <h4>使用说明</h4>
+              <p>xxxx xxxx xxxx</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Artifact Management (先搜索选组件 → Gitee 制品仓库)
+function pageCompArtifact(){
+  // 未选择组件：展示组件列表
+  if(!selectedArtifactComp){
+    return `<div class="content">
+      <div class="page-title">制品管理</div>
+      <div class="card mb-16">
+        <div class="gap-8" style="flex:1">
+          <input class="input" style="max-width:360px" placeholder="输入组件名称、PURL 或仓库标识..."/>
+          <select class="input" style="width:140px"><option>全部分类</option><option>基础库</option><option>数学计算</option><option>界面框架</option><option>CAD引擎</option></select>
+          <button class="btn btn-primary">${icons.search} 检索</button>
+        </div>
+        <div class="text-sm text-muted mb-16" style="margin-top:12px">请先检索并选择组件，再进入对应的制品仓库进行管理。</div>
+        <table class="table">
+          <thead><tr><th>组件名称</th><th>PURL</th><th>分类</th><th>制品仓库数</th><th>包类型</th><th style="width:140px">操作</th></tr></thead>
+          <tbody>
+            ${components.map((c,i)=>`<tr>
+              <td><b>${c.name}</b></td>
+              <td style="font-family:monospace;font-size:12px">${c.purl}</td>
+              <td><span class="tag tag-blue">${c.category}</span></td>
+              <td>${[3,2,1,4,1][i]||1}</td>
+              <td><span class="tag tag-orange">${['Generic','Maven','Generic','Npm','Generic'][i]||'Generic'}</span></td>
+              <td><button class="btn btn-sm btn-primary" onclick="selectedArtifactComp=${JSON.stringify(c).replace(/"/g,'&quot;')};render();">管理制品 &rarr;</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="pagination"><span>共 ${components.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+      </div>
+    </div>`;
+  }
+
+  // 已选择组件：进入制品仓库管理（Gitee 形态）
+  const c = selectedArtifactComp;
+  const ver = c.purl.split('@')[1];
+  const repos = [
+    {name:`${c.name.toLowerCase()}-npm-vr`, active:true},
+    {name:`${c.name.toLowerCase()}-composer-virtual`},
+    {name:`${c.name.toLowerCase()}-maven-virtual`},
+    {name:`${c.name.toLowerCase()}-docker`},
+    {name:`${c.name.toLowerCase()}-go-vr`},
+    {name:`${c.name.toLowerCase()}-helm-vr`},
+    {name:`${c.name.toLowerCase()}-pypi-vr`},
+    {name:`${c.name.toLowerCase()}-public`},
+  ];
+  const relatedRepos = [
+    {id:`${c.name.toLowerCase()}-npm-local`, type:'local'},
+    {id:`${c.name.toLowerCase()}-npm-re2`, type:'remote'},
+  ];
+  return `<div class="content">
+    <div style="margin-bottom:12px"><button class="btn btn-sm" onclick="selectedArtifactComp=null;render();">&larr; 返回组件列表</button></div>
+
+    <div class="gitee-art-header">
+      <div>
+        <div class="gitee-art-title">${c.name} · 制品</div>
+        <div class="gitee-art-sub">关联组件 ${c.name}（${c.purl}） · 提供 ${repos.length} 个制品仓库</div>
+      </div>
+      <div class="gitee-art-search">
+        <select class="input" style="width:100px"><option>制品</option></select>
+        <input class="input" style="width:200px" placeholder="请输入制品名称"/>
+        <button class="btn btn-sm">${icons.search}</button>
+        <button class="btn btn-sm">⊞</button>
+        <button class="btn btn-sm">发布</button>
+        <button class="btn btn-primary btn-sm">&lt;/&gt; 仓库指引</button>
+      </div>
+    </div>
+
+    <div class="gitee-art-filterbar">
+      <input class="input" style="width:200px" placeholder="请输入仓库标识或名称"/>
+      <button class="btn btn-sm">${icons.search}</button>
+      <span class="text-sm text-muted">包类型</span>
+      <select class="input" style="width:140px"><option>请选择包类型</option><option>Npm</option><option>Maven</option><option>Docker</option><option>PyPI</option><option>Go</option></select>
+      <span class="text-sm text-muted">仓库类型</span>
+      <select class="input" style="width:140px"><option>请选择仓库类型</option><option>local</option><option>remote</option><option>virtual</option></select>
+      <button class="btn btn-sm">⊞</button>
+      <button class="btn btn-sm">重置</button>
+    </div>
+
+    <div class="gitee-art-layout">
+      <div class="gitee-art-list">
+        ${repos.map(r=>`<div class="gitee-art-item ${r.active?'active':''}">
+          <span class="arrow">▸</span>
+          <span class="ico">${icons.package}</span>
+          <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.name}</span>
+        </div>`).join('')}
+      </div>
+
+      <div class="gitee-art-detail">
+        <div class="gitee-art-detail-head">
+          <h3><span style="display:inline-flex;width:18px;height:18px;align-items:center;justify-content:center">${icons.package}</span> ${c.name.toLowerCase()}-npm-vr <span style="font-weight:400;font-size:12px;color:var(--text-tertiary)">[${c.name.toLowerCase()}-npm-vr]</span></h3>
+          <div class="actions"><span>${icons.download}</span><span>${icons.refresh}</span><span>⋯</span></div>
+        </div>
+        <div class="gitee-art-detail-tabs">
+          <div class="gitee-art-detail-tab active">基础信息</div>
+        </div>
+        <div class="gitee-art-info">
+          <div class="gitee-art-info-row"><div class="lbl">仓库标识：</div><div class="val">${c.name.toLowerCase()}-npm-vr <span class="copy-icon">⎘</span></div></div>
+          <div class="gitee-art-info-row"><div class="lbl">仓库名称：</div><div class="val">${c.name.toLowerCase()}-npm-vr <span class="copy-icon">⎘</span></div></div>
+          <div class="gitee-art-info-row"><div class="lbl">包类型：</div><div class="val"><span style="color:var(--error);font-weight:600">▣</span> Npm</div></div>
+          <div class="gitee-art-info-row"><div class="lbl">创建信息：</div><div class="val"><div class="avatar" style="width:20px;height:20px;font-size:10px">李</div> 李瑞花 于 2025-09-06 19:28:54 创建</div></div>
+          <div class="gitee-art-info-row"><div class="lbl">仓库路径：</div><div class="val">${c.name.toLowerCase()}-npm-vr/ <span class="copy-icon">⎘</span></div></div>
+          <div class="gitee-art-info-row"><div class="lbl">URL：</div><div class="val"><a>https://osc.gitee.work/xly-poc/repo/repository/${c.name.toLowerCase()}-npm-vr</a> <span class="copy-icon">⎘</span></div></div>
+          <div class="gitee-art-info-row"><div class="lbl">仓库描述：</div><div class="val">--</div></div>
+        </div>
+        <div class="gitee-art-relate">
+          <div class="gitee-art-relate-title">▎包含/关联仓库 ⓘ</div>
+          <div class="flex-between mb-16">
+            <div class="gap-8">
+              <input class="input" style="width:180px" placeholder="请输入仓库标识搜索"/>
+              <button class="btn btn-sm">${icons.search}</button>
+              <span class="text-sm text-muted">仓库类型</span>
+              <select class="input" style="width:140px"><option>请选择仓库类型</option></select>
+            </div>
+            <div class="gap-8">
+              <button class="btn btn-sm btn-primary">包含</button>
+              <button class="btn btn-sm">关联</button>
+            </div>
+          </div>
+          <table class="table"><thead><tr><th>仓库标识</th><th>仓库类型</th><th>操作</th></tr></thead>
+          <tbody>${relatedRepos.map(r=>`<tr>
+            <td>${r.id}</td>
+            <td><span class="tag tag-blue">${r.type}</span></td>
+            <td><a style="color:var(--primary-500);cursor:pointer">查看</a></td>
+          </tr>`).join('')}</tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Verify
+function pageVerify(){
+  // 批量验签 mock 结果
+  const batchVerifyFiles = [
+    {file:'opencv-4.9.0-linux-x64.tar.gz', size:'56.2 MB', component:'OpenCV@4.9.0', result:'通过', algo:'SM2+SM3', signTime:'2025-12-15 10:00:00'},
+    {file:'eigen-3.4.0-src.tar.gz', size:'12.8 MB', component:'Eigen@3.4.0', result:'通过', algo:'SM2+SM3', signTime:'2025-10-08 14:20:00'},
+    {file:'boost-1.84.0-windows-x64.zip', size:'128.5 MB', component:'Boost@1.84.0', result:'通过', algo:'SM2+SM3', signTime:'2025-11-20 09:30:00'},
+    {file:'unknown-lib-2.1.zip', size:'8.6 MB', component:'-', result:'失败-未匹配组件', algo:'-', signTime:'-'},
+    {file:'qt-6.7.0-installer-tampered.exe', size:'85.3 MB', component:'Qt@6.7.0', result:'失败-签名不匹配', algo:'SM2+SM3', signTime:'2026-01-10 11:00:00'},
+  ];
+  const batchOk = batchVerifyFiles.filter(f=>f.result==='通过').length;
+  const batchFail = batchVerifyFiles.length - batchOk;
+
+  const singleContent = `
+    <div class="upload-area" id="uploadArea">
+      <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--text-tertiary);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:14px;margin-bottom:4px">点击或拖拽<b>单个文件</b>到此区域上传</div>
+      <div class="text-sm">支持 .tar.gz / .zip / .jar 等格式的组件文件</div>
+    </div>
+    <div class="verify-result success" style="margin-top:20px">
+      <h3 style="color:var(--success)">验签通过</h3>
+      <p>该组件与平台签名一致，来源可信，文件未被篡改</p>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-tertiary)">
+        匹配组件：OpenCV@4.9.0 | 签名时间：2026-04-08 10:15:22 | 签名算法：SM2+SM3
+      </div>
+    </div>`;
+
+  const batchContent = `
+    <div class="upload-area" id="uploadAreaBatch">
+      <svg viewBox="0 0 24 24" style="width:40px;height:40px;stroke:var(--text-tertiary);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div style="font-size:14px;margin-bottom:4px">点击或拖拽<b>多个文件 / 文件夹 / .zip 包</b>到此区域上传</div>
+      <div class="text-sm">支持一次性上传多个组件文件批量验签，单批最多 50 个文件，单文件不超过 500MB</div>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns:repeat(4,1fr);margin-top:20px;margin-bottom:16px;">
+      <div class="stat-card"><div class="stat-label">本次验签文件总数</div><div class="stat-value">${batchVerifyFiles.length}</div></div>
+      <div class="stat-card" style="border-color:var(--success)"><div class="stat-label">验签通过</div><div class="stat-value" style="color:var(--success)">${batchOk}</div></div>
+      <div class="stat-card" style="border-color:var(--error)"><div class="stat-label">验签失败</div><div class="stat-value" style="color:var(--error)">${batchFail}</div></div>
+      <div class="stat-card"><div class="stat-label">通过率</div><div class="stat-value">${Math.round(batchOk/batchVerifyFiles.length*100)}%</div></div>
+    </div>
+
+    <div class="flex-between mb-16">
+      <b style="font-size:14px">批量验签结果明细</b>
+      <div class="gap-8">
+        <button class="btn btn-sm">${icons.refresh} 重新验签</button>
+        <button class="btn btn-sm">${icons.download} 导出报告</button>
+      </div>
+    </div>
+    <table class="table">
+      <thead><tr><th style="width:32px"><input type="checkbox" checked/></th><th>文件名</th><th>大小</th><th>匹配组件</th><th>签名算法</th><th>签名时间</th><th>验签结果</th><th>操作</th></tr></thead>
+      <tbody>
+        ${batchVerifyFiles.map(f=>`<tr>
+          <td><input type="checkbox" checked/></td>
+          <td><b>${f.file}</b></td>
+          <td>${f.size}</td>
+          <td>${f.component==='-'?'<span class="text-muted">-</span>':f.component}</td>
+          <td>${f.algo}</td>
+          <td>${f.signTime}</td>
+          <td><span class="tag ${f.result==='通过'?'tag-green':'tag-red'}">${f.result}</span></td>
+          <td><button class="btn btn-sm">详情</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  return `<div class="content">
+    <div class="page-title">组件验签</div>
+    <div class="card">
+      <div class="tabs" style="margin-bottom:20px">
+        <div class="tab ${verifyMode==='single'?'active':''}" onclick="verifyMode='single';render();">单个验签</div>
+        <div class="tab ${verifyMode==='batch'?'active':''}" onclick="verifyMode='batch';render();">批量验签</div>
+      </div>
+      <div class="card-title" style="margin-bottom:16px">
+        <span>${verifyMode==='single'?'上传单个组件进行签名验证':'批量上传多个组件文件进行签名验证'}</span>
+        ${verifyMode==='batch'?'<span class="tag tag-blue">支持多文件 / 整目录 / .zip 包</span>':''}
+      </div>
+      ${verifyMode==='single'?singleContent:batchContent}
+    </div>
+    <div class="card">
+      <div class="card-title">验签历史记录</div>
+      <table class="table"><thead><tr><th>时间</th><th>操作人</th><th>文件名</th><th>匹配组件</th><th>结果</th></tr></thead>
+      <tbody>${logs.verify.map(l=>`<tr><td>${l.time}</td><td>${l.user}</td><td>${l.file}</td><td>${l.component}</td><td><span class="tag ${l.result.includes('通过')?'tag-green':'tag-red'}">${l.result}</span></td></tr>`).join('')}</tbody></table>
+    </div>
+  </div>`;
+}
+
+// PAGE: Tenant
+function pageTenant(){
+  return `<div class="content">
+    <div class="page-title flex-between"><span>租户管理</span><button class="btn btn-primary">${icons.plus} 新增租户</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="table"><thead><tr><th>租户ID</th><th>租户名称</th><th>状态</th><th>用户数</th><th>组件数</th><th>创建时间</th><th>操作</th></tr></thead>
+      <tbody>${tenants.map(t=>`<tr>
+        <td>${t.id}</td><td><b>${t.name}</b></td>
+        <td><span class="tag ${t.status==='启用'?'tag-green':'tag-red'}">${t.status}</span></td>
+        <td>${t.users}</td><td>${t.components}</td><td>${t.created}</td>
+        <td class="gap-8"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">${t.status==='启用'?'停用':'启用'}</button></td>
+      </tr>`).join('')}</tbody></table>
+      <div class="pagination" style="padding:12px"><span>共 ${tenants.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+    </div>
+  </div>`;
+}
+
+// PAGE: User
+function pageUser(){
+  return `<div class="content">
+    <div class="page-title flex-between"><span>用户管理</span><button class="btn btn-primary">${icons.plus} 新增用户</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="padding:12px 20px" class="flex-between">
+        <div class="gap-8">
+          <input class="input" style="width:200px" placeholder="搜索用户名/邮箱"/>
+          <select class="input" style="width:140px"><option>全部租户</option>${tenants.map(t=>`<option>${t.name}</option>`).join('')}</select>
+          <select class="input" style="width:140px"><option>全部状态</option><option>启用</option><option>禁用</option></select>
+        </div>
+      </div>
+      <table class="table"><thead><tr><th>用户ID</th><th>用户名</th><th>邮箱</th><th>角色</th><th>所属租户</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>${users.map(u=>`<tr>
+        <td>${u.id}</td><td><b>${u.name}</b></td><td>${u.email}</td>
+        <td><span class="tag tag-blue">${u.role}</span></td>
+        <td>${u.tenant}</td>
+        <td><span class="tag ${u.status==='启用'?'tag-green':'tag-red'}">${u.status}</span></td>
+        <td class="gap-8"><button class="btn btn-sm">编辑</button><button class="btn btn-sm">${u.status==='启用'?'禁用':'启用'}</button></td>
+      </tr>`).join('')}</tbody></table>
+      <div class="pagination" style="padding:12px"><span>共 ${users.length} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+    </div>
+  </div>`;
+}
+
+// PAGE: Role
+function pageRole(){
+  return `<div class="content">
+    <div class="page-title flex-between"><span>角色管理</span><button class="btn btn-primary">${icons.plus} 新增角色</button></div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <table class="table"><thead><tr><th>角色ID</th><th>角色名称</th><th>描述</th><th>绑定用户数</th><th>操作</th></tr></thead>
+      <tbody>${roles.map(r=>`<tr>
+        <td>${r.id}</td><td><b>${r.name}</b> ${!r.editable?'<span class="tag tag-gray">系统预置</span>':''}</td>
+        <td>${r.desc}</td><td>${r.users}</td>
+        <td class="gap-8">
+          <button class="btn btn-sm">权限配置</button>
+          ${r.editable?`<button class="btn btn-sm">编辑</button><button class="btn btn-sm btn-danger">删除</button>`:'<span class="text-sm text-muted">不可修改</span>'}
+        </td>
+      </tr>`).join('')}</tbody></table>
+    </div>
+  </div>`;
+}
+
+// PAGE: License
+function pageLicense(){
+  return `<div class="content">
+    <div class="page-title">License管理</div>
+    <div class="card">
+      <div class="card-title">当前授权状态</div>
+      <div class="stat-row" style="margin-bottom:0">
+        <div class="stat-card" style="border-color:var(--success)"><div class="stat-label">授权状态</div><div class="stat-value" style="color:var(--success);font-size:18px">有效</div></div>
+        <div class="stat-card"><div class="stat-label">到期时间</div><div class="stat-value" style="font-size:16px">2027-06-01</div></div>
+        <div class="stat-card"><div class="stat-label">授权用户上限</div><div class="stat-value">500<small>/ 已用 248</small></div></div>
+        <div class="stat-card"><div class="stat-label">授权租户上限</div><div class="stat-value">10<small>/ 已用 5</small></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">授权详情</div>
+      <div class="info-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="info-item"><span class="info-label">授权对象</span><span class="info-value">可信开源代码仓管理平台</span></div>
+        <div class="info-item"><span class="info-label">部署标识</span><span class="info-value">PROD-CN-MAIN-001</span></div>
+        <div class="info-item"><span class="info-label">功能范围</span><span class="info-value">全功能</span></div>
+        <div class="info-item"><span class="info-label">导入时间</span><span class="info-value">2026-01-15 09:30:00</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title flex-between"><span>License导入</span></div>
+      <div class="form-group mb-16">
+        <label>License授权串</label>
+        <textarea class="input" rows="4" placeholder="请粘贴License授权串..."></textarea>
+      </div>
+      <button class="btn btn-primary">导入并校验</button>
+    </div>
+  </div>`;
+}
+
+// PAGE: Log
+function pageLog(){
+  const logTabs = [{id:'login',label:'用户登录记录'},{id:'download',label:'组件下载记录'},{id:'verify-log',label:'组件验签记录'},{id:'query',label:'组件查询记录'},{id:'update',label:'组件更新记录'},{id:'delete',label:'组件删除记录'},{id:'import',label:'组件引入记录'},{id:'edit',label:'组件编辑记录'},{id:'api',label:'接口调用日志'}];
+  let tc = '';
+  let total = 0;
+  if(logTab==='login'){
+    total = logs.login.length;
+    tc = `<table class="table"><thead><tr><th>时间</th><th>用户</th><th>IP地址</th><th>结果</th></tr></thead>
+    <tbody>${logs.login.map(l=>`<tr><td>${l.time}</td><td>${l.user}</td><td>${l.ip}</td><td><span class="tag ${l.result==='成功'?'tag-green':'tag-red'}">${l.result}</span></td></tr>`).join('')}</tbody></table>`;
+  } else if(logTab==='download'){
+    total = logs.download.length;
+    tc = `<table class="table"><thead><tr><th>时间</th><th>用户</th><th>组件</th><th>类型</th><th>大小</th></tr></thead>
+    <tbody>${logs.download.map(l=>`<tr><td>${l.time}</td><td>${l.user}</td><td>${l.component}</td><td><span class="tag tag-blue">${l.type}</span></td><td>${l.size}</td></tr>`).join('')}</tbody></table>`;
+  } else if(logTab==='verify-log'){
+    total = logs.verify.length;
+    tc = `<table class="table"><thead><tr><th>时间</th><th>操作人</th><th>文件</th><th>匹配组件</th><th>结果</th></tr></thead>
+    <tbody>${logs.verify.map(l=>`<tr><td>${l.time}</td><td>${l.user}</td><td>${l.file}</td><td>${l.component}</td><td><span class="tag ${l.result.includes('通过')?'tag-green':'tag-red'}">${l.result}</span></td></tr>`).join('')}</tbody></table>`;
+  } else if(logTab==='api'){
+    total = logs.api.length;
+    tc = `<div class="text-sm text-muted mb-16">记录平台与外部系统（一所可信评估接口、软件所组件/漏洞/族谱接口、单点登录接口等）的调用情况，用于监控对接稳定性与排查异常。</div>
+    <table class="table"><thead><tr><th>时间</th><th>调用方/接口</th><th>路径</th><th>方法</th><th>状态码</th><th>耗时</th></tr></thead>
+    <tbody>${logs.api.map(l=>{
+      const ok = l.status>=200 && l.status<400;
+      return `<tr><td>${l.time}</td><td>${l.caller}</td><td style="font-family:monospace;font-size:12px">${l.endpoint}</td><td><span class="tag tag-blue">${l.method}</span></td><td><span class="tag ${ok?'tag-green':'tag-red'}">${l.status}</span></td><td>${l.duration}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  } else {
+    tc = `<div class="empty">暂无记录</div>`;
+  }
+  return `<div class="content">
+    <div class="page-title">日志统计</div>
+    <div class="card">
+      <div class="tabs" style="flex-wrap:wrap">${logTabs.map(t=>`<div class="tab ${logTab===t.id?'active':''}" onclick="logTab='${t.id}';render();">${t.label}</div>`).join('')}</div>
+      <div style="padding:12px 0" class="flex-between">
+        <div class="gap-8">
+          <input class="input" style="width:160px" type="date" value="2026-04-01"/>
+          <span class="text-muted">至</span>
+          <input class="input" style="width:160px" type="date" value="2026-04-08"/>
+          <button class="btn btn-sm btn-primary">查询</button>
+        </div>
+        <button class="btn btn-sm">${icons.download} 导出</button>
+      </div>
+      ${tc}
+      <div class="pagination"><span>共 ${total} 条</span><div class="pagination-btns"><button class="active">1</button></div></div>
+    </div>
+  </div>`;
+}
+
+// Router
+function getPageContent(){
+  switch(currentPage){
+    case 'portal': return pagePortal();
+    case 'search': return pageSearch();
+    case 'search-result': return pageSearchResult();
+    case 'detail': return pageDetail();
+    case 'version-detail': return pageVersionDetail();
+    case 'shortlist': return pageShortlist();
+    case 'my-downloads': return pageMyDownloads();
+    case 'comp-info': return pageCompInfo();
+    case 'comp-lifecycle': return pageLifecycle();
+    case 'comp-code': return pageCompCode();
+    case 'comp-artifact': return pageCompArtifact();
+    case 'verify': return pageVerify();
+    case 'tenant': return pageTenant();
+    case 'user': return pageUser();
+    case 'role': return pageRole();
+    case 'license': return pageLicense();
+    case 'log': return pageLog();
+    default: return pageSearch();
+  }
+}
+
+function render(){
+  // 门户页是独立全屏布局，不走 sidebar+header
+  if(currentPage==='portal'){
+    app.innerHTML = pagePortal();
+    return;
+  }
+  app.innerHTML = `${renderSidebar()}<div class="main">${renderHeader()}${getPageContent()}</div>`;
+}
+
+render();
+</script>
+</body>
+</html>
